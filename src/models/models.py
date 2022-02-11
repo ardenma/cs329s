@@ -12,6 +12,7 @@ class embedding_model:
         self.embedding_size = embedding_size
         self.model = None  # TODO load a real model
 
+    # Takes as input a list of strings and returns a same size list of embeddings
     @serve.batch(batch_wait_timeout_s=0.1)
     async def batch_handler(self, inputs: List[str]) -> List[np.array]:
         # TODO should actual use the embedding model
@@ -35,6 +36,7 @@ class prediction_model:
         y = np.random.randint(0,2,100)
         self.model.fit(X,y)
 
+    # Takes as input a list of embeddings and returns a same size list of floats
     @serve.batch(batch_wait_timeout_s=0.1)
     async def batch_handler(self, embeddings: List[np.array]) -> List[float]:
         batched_embeddings = np.vstack(embeddings)
@@ -62,7 +64,7 @@ class MisinformationDetectionModel:
         self.prediction_model = prediction_model.get_handle(sync=False)
     
     # This method can be called concurrently!
-    async def __call__(self, input: str):
+    async def __call__(self, input: str) -> float:
         embedding = await self.embedding_model.remote(input=input)
         prediction = await self.prediction_model.remote(embedding=embedding)
         return prediction

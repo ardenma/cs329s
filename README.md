@@ -2,7 +2,7 @@
 
 ## Setup
 1. use `python3 -m venv env` to create a virtual environment
-2. activate the virtual environment with `source env/bin/activate`
+2. activate the virtual environment with `source env/bin/activate` and then `pip install -r requirements.txt` to install all the python dependencies
     - you may need to `pip install -U pip` to upgrade the pip version, as well as `pip install wheel`
 3. install the project as a package (for imports to work) with `pip install -e .`
 

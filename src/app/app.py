@@ -1,5 +1,4 @@
 import logging
-from typing import List
 
 import ray
 from fastapi import FastAPI
@@ -19,7 +18,7 @@ class MisinformationDetectionApp:
         self.model = MisinformationDetectionModel.get_handle(sync=True)  # TODO figure out why sync=False fails
 
     @app.post("/predict", response_model=Response)
-    async def predict(self, query: Query) -> List[Response]:
+    async def predict(self, query: Query) -> Response:
         prediction = await self.model.remote(query.data)
         prediction = ray.get(prediction)  # materialize prediction
         response = Response(id=query.id, prediction=prediction)
