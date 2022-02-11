@@ -21,6 +21,3 @@ class MisinformationDetectionApp:
     @app.get("/")
     def root(self):
         return "Hello, from our app!"
-
-def get_app_handle():
-    return app
