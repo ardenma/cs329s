@@ -14,5 +14,5 @@
 ## Testing
 1. use `ray start --head` to start the ray cluster
 2. try some tests.
-    - e.g. `python tests/sanity.py` launches the application and tries to make 5 POST requests to the application and prints the response.
+    - e.g. `python tests/simple_http_request.py` launches the application and tries to make 5 POST requests to the application and prints the response.
 3. use `ray stop` to kill the ray cluster
