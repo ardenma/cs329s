@@ -4,7 +4,7 @@ import ray
 from fastapi import FastAPI
 from ray import serve
 
-from  src.models.models import MisinformationDetectionModel
+from  src.app.model_deployment import MisinformationDetectionModel
 from  src.utils.datatypes import Query, Response
 
 app = FastAPI()

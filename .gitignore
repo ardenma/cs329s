@@ -1,4 +1,4 @@
 env/
 myproject.egg-info/
-
+src/saved_models/
 __pycache__/
