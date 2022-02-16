@@ -1,5 +1,5 @@
 import logging
-from typing import Tuple
+from typing import Dict
 
 from torch.utils.data import Dataset
 from datasets import load_dataset
@@ -12,7 +12,7 @@ class LiarDataset(Dataset):
         self.dataset = load_dataset("liar")[split]
         logging.info(f"Loaded 'liar' dataset's {split} split")
 
-    def __getitem__(self, idx: int) -> Tuple[str, float]:
+    def __getitem__(self, idx: int) -> Dict[str, float]:
         x = self.dataset[idx]['statement']
         y = 1.0 if self.dataset[idx]['label'] > 0 and self.dataset[idx]['label'] < 4 else 0.0
         return {"data": x, "label": y}
