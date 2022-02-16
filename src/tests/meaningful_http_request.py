@@ -38,4 +38,7 @@ results = parse_results(results)
 print("Result returned:", results)
 
 for i, sample in enumerate(samples):
-    print(f"Query {i}, prediction: {find_response(results, i)['prediction']} true label: {sample['label']}")
+    prediction = find_response(results, i)['prediction']
+    label = int(sample['label'])
+    result = "CORRECT!" if round(prediction) == label else "WRONG!"
+    print(f"Query {i}, prediction: {prediction} -> {round(prediction)} true label: {label}, {result}")
