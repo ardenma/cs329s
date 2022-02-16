@@ -32,7 +32,7 @@ class BOWEmbedding:
             text = re.sub(r'[^\w\s]', '', sample)
             tokens = word_tokenize(text)
             for tok in tokens:
-                if not tok.lower() in self.stop_words:
+                if not tok.lower() in self.stop_words and tok.lower() in self.bow_map:
                     embeddings[i][self.bow_map[tok.lower()]] += 1
         
         return embeddings
