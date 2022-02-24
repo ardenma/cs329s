@@ -13,10 +13,13 @@ from src.models.baselines import LogisticRegression
 BASEDIR = pathlib.Path(__file__).parent.parent.absolute()
 @serve.deployment
 class embedding_model:
-    def __init__(self):
+    def __init__(self, saved_model_path: str=None):
         logging.basicConfig(level=logging.INFO)
         self.model = BOWEmbedding()
-        self.model.load(os.path.join(BASEDIR, "saved_models", "embedding_model.pt"))
+        if saved_model_path is None:
+            saved_model_path = os.path.join(BASEDIR, "saved_models", "embedding_model.pt")
+        self.model.load(saved_model_path)
+        logging.info(f"Embedding model loaded from {saved_model_path}.")
         self.embedding_size = self.model.get_embedding_size()
 
     # Takes as input a list of strings and returns a same size list of embeddings
@@ -33,10 +36,13 @@ class embedding_model:
 
 @serve.deployment
 class prediction_model:
-    def __init__(self):
+    def __init__(self, saved_model_path: str=None):
         logging.basicConfig(level=logging.INFO)
         self.model = LogisticRegression()
-        self.model.load(os.path.join(BASEDIR, "saved_models", "prediction_model.pt"))
+        if saved_model_path is None:
+            saved_model_path = os.path.join(BASEDIR, "saved_models", "prediction_model.pt")
+        self.model.load(saved_model_path)
+        logging.info(f"Prediction model loaded from {saved_model_path}.")
 
     # Takes as input a list of embeddings and returns a same size list of floats
     @serve.batch(batch_wait_timeout_s=0.1)
@@ -55,11 +61,11 @@ class prediction_model:
 # function, Ray Serve sets the limit to a high number.
 @serve.deployment(max_concurrent_queries=10)
 class MisinformationDetectionModel:
-    def __init__(self):
+    def __init__(self, saved_embedding_model_path: str=None, saved_prediction_model_path: str=None):
         logging.basicConfig(level=logging.INFO)
 
-        embedding_model.deploy()
-        prediction_model.deploy()
+        embedding_model.deploy(saved_embedding_model_path)
+        prediction_model.deploy(saved_prediction_model_path)
         
         self.embedding_model = embedding_model.get_handle(sync=False)
         self.prediction_model = prediction_model.get_handle(sync=False)
