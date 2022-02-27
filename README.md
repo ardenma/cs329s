@@ -6,10 +6,12 @@
     - you may need to `pip install -U pip` to upgrade the pip version, as well as `pip install wheel`
     - might need to `sudo apt install libomp5 libomp-dev` for faiss
 3. install the project as a package (for imports to work) with `pip install -e .`
+4. setup wandb account and get API key (https://wandb.ai/)
 
 ## Training Models
 1. run `python train.py` which should create two models `embedding_mode.pt` and `prediction_model.pt` in the `saved_models` directory
     - IMPORTANT: you will need these models for the future steps
+    - run `python train.py --contrastive` to run with contrastive loss
 2. run `python evaluate.py` to evaluate the saved models
 
 ## Running the Application
