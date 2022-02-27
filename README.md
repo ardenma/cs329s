@@ -9,6 +9,8 @@
 ## Training Models
 1. run `python train.py` which should create two models `embedding_mode.pt` and `prediction_model.pt` in the `saved_models` directory
     - IMPORTANT: you will need these models for the future steps
+2. run `python evaluate.py` to evaluate the saved models
+
 ## Running the Application
 1. use `ray start --head` to start the ray cluster
 2. use `python src/serve.py` to start the application (the application will run until `ray stop` is called)
