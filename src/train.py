@@ -101,11 +101,11 @@ def train_contrastive():
   if not os.path.exists(saved_models_dir): os.mkdir(saved_models_dir)
   
   # Generate filename
-  if not os.path.exists(os.path.join(saved_models_dir, "embedding_model.pt")):
+  if not os.path.exists(os.path.join(saved_models_dir, "embedding_model_epoch_0.pt")):
       filename = os.path.join(saved_models_dir, "embedding_model.pt")
   else:
       i = 1
-      while os.path.exists(os.path.join(saved_models_dir, f"tmp_embedding_model_{i}.pt")):
+      while os.path.exists(os.path.join(saved_models_dir, f"tmp_embedding_model_{i}_epoch_0.pt")):
           i += 1
       filename = os.path.join(saved_models_dir, f"tmp_embedding_model_{i}.pt")
 
@@ -140,7 +140,7 @@ def train_contrastive():
       loss = contrastive_loss(embeddings, y_label)
       
       # Logging
-      wandb.log({"loss": loss})
+      wandb.log({"loss": loss, "epoch": epoch})
       wandb.watch(embedding_model)
 
       # Backward pass
