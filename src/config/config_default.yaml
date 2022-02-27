@@ -1,0 +1,16 @@
+# sample config defaults file
+epochs:
+  desc: Number of epochs to train over
+  value: 100
+batch_size:
+  desc: Size of each mini-batch
+  value: 10
+learning_rate:
+  desc: Learning rate for optimizer (Adam)
+  value: 0.001
+embedding_size: 
+  desc: Size of embeddings to use
+  value: 512
+same_label_multiplier: 
+  desc:  Multiplier for same label embedding pairs in contrastive loss
+  value: 5

@@ -13,16 +13,14 @@ from models.heads import SoftmaxHead
 from utils.data import LiarDataset
 from utils.loss import contrastive_loss
 logging.getLogger().setLevel(logging.INFO)
+cwd = pathlib.Path(__file__).parent.resolve()
 
 wandb.init(
   project="cs329s", 
   entity="ardenma", 
-  config = {
-    "learning_rate": 0.001,
-    "epochs": 100,
-    "batch_size": 10,
-    "embedding_size": 512
-  })
+  config = os.path.join(cwd, "config", "config_default.yaml"),
+  reinit=True
+  )
 
 def train():
   train_dataset = LiarDataset("train")
@@ -58,15 +56,13 @@ def train():
       # Compute Loss
       loss = criterion(y_pred, y_label)
 
-      wandb.log({"loss": loss})
-      wandb.watch(embedding_model)
+      # Logging
+      wandb.log({"loss": loss, "epoch": epoch})
+      #wandb.watch(embedding_model)
 
       # Backward pass
       loss.backward()
       optimizer.step()
-    
-    if epoch % 10 == 0:
-      wandb.log()
   
   logging.info("Done.")
 
@@ -76,22 +72,8 @@ def train():
   if not os.path.exists(saved_models_dir): os.mkdir(saved_models_dir)
 
   print("Saving models...")
-  if not os.path.exists(os.path.join(saved_models_dir, "embedding_model.pt")):
-      embedding_model.save(os.path.join(saved_models_dir, "embedding_model.pt"))
-  else:
-      i = 1
-      while os.path.exists(os.path.join(saved_models_dir, f"tmp_embedding_model_{i}.pt")):
-          i += 1
-      embedding_model.save(os.path.join(saved_models_dir, f"tmp_embedding_model_{i}.pt"))
-
-  if not os.path.exists(os.path.join(saved_models_dir, "prediction_model.pt")):
-      prediction_model.save(os.path.join(saved_models_dir, "prediction_model.pt"))
-  else:
-      i = 1
-      while os.path.exists(os.path.join(saved_models_dir, f"tmp_prediction_model_{i}.pt")):
-          i += 1
-      prediction_model.save(os.path.join(saved_models_dir, f"tmp_prediction_model_{i}.pt"))
-
+  embedding_model.save(os.path.join(saved_models_dir, f"{wandb.run.name}_embedding_model.pt"))
+  prediction_model.save(os.path.join(saved_models_dir, f"{wandb.run.name}_prediction_model.pt"))
   print("Done!")
 
 def train_contrastive():
@@ -101,13 +83,7 @@ def train_contrastive():
   if not os.path.exists(saved_models_dir): os.mkdir(saved_models_dir)
   
   # Generate filename
-  if not os.path.exists(os.path.join(saved_models_dir, "embedding_model_epoch_0.pt")):
-      filename = os.path.join(saved_models_dir, "embedding_model.pt")
-  else:
-      i = 1
-      while os.path.exists(os.path.join(saved_models_dir, f"tmp_embedding_model_{i}_epoch_0.pt")):
-          i += 1
-      filename = os.path.join(saved_models_dir, f"tmp_embedding_model_{i}.pt")
+  filename = os.path.join(saved_models_dir, f"{wandb.run.name}_embedding_model.pt")
 
   # Get Dataset
   train_dataset = LiarDataset("train")
@@ -137,11 +113,11 @@ def train_contrastive():
       y_label = batch["label"]
 
       # # Compute Loss
-      loss = contrastive_loss(embeddings, y_label)
+      loss = contrastive_loss(embeddings, y_label, wandb.config.same_label_multiplier)
       
       # Logging
       wandb.log({"loss": loss, "epoch": epoch})
-      wandb.watch(embedding_model)
+      #wandb.watch(embedding_model)
 
       # Backward pass
       loss.backward()
@@ -159,6 +135,7 @@ def train_contrastive():
   print("Done!")
 
 if __name__=="__main__":
+    wandb.require(experiment="service")
     parser = argparse.ArgumentParser(description='Process some integers.')
     parser.add_argument('--contrastive', action='store_true')
     args = parser.parse_args()

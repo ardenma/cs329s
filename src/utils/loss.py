@@ -2,7 +2,7 @@ import torch
 import logging
 logging.getLogger().setLevel(logging.DEBUG)
 
-def contrastive_loss(embeddings, labels):
+def contrastive_loss(embeddings: torch.tensor, labels: torch.tensor, same_label_multiplier: int=5):
     # B X EMB_SIZE
     normalized_embs = torch.nn.functional.normalize(embeddings, p=2.0, dim=-1, eps=1e-12)
     logging.debug(f"normalized_embs: {normalized_embs}")
@@ -24,7 +24,7 @@ def contrastive_loss(embeddings, labels):
     for row in range(len(labels)):
         for col in range(len(labels)):
             if row != col and label_distances[row, col] == 0:
-                label_distances[row, col] = 10  # arbitrary
+                label_distances[row, col] = same_label_multiplier  # arbitrary
 
     logging.debug(f"label_distances: {label_distances}")
 
