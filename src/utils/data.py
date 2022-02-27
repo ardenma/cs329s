@@ -14,6 +14,9 @@ CONVERSION = {0:5, 1:0, 2:4, 3:1, 4:2, 5:3}
 
 def convert_label(label):
     return CONVERSION[label]
+
+def string_to_id(string: str) -> int:
+    return int(string.split('.')[0])
 class LiarDataset(Dataset):
     def __init__(self, split: str="train", binary_labels: bool=False):
         super(LiarDataset, self).__init__()
@@ -35,7 +38,7 @@ class LiarDataset(Dataset):
         else:
             y = int(self.dataset[idx]['label'])
 
-        return {"data": x, "label": convert_label(y)}
+        return {"data": x, "label": convert_label(y), "id": string_to_id(self.dataset[idx]["id"])}
     
     def __len__(self):
         return len(self.dataset)
@@ -45,6 +48,9 @@ class LiarDataset(Dataset):
     
     def get_num_classes(self) -> int:
         return 2 if self.binary_labels else 6
+    
+    def get_id_map(self) -> Dict[int, Dict[str, Union[int, str]]]:
+        return {string_to_id(ex["id"]): {"label": ex["label"], "statement": ex["statement"]} for ex in self.dataset}
 
     ### THIS DOES NOT WORK RIGHT NOW ###
     def tokenize(self):

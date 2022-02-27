@@ -12,7 +12,9 @@
 1. run `python train.py` which should create two models `embedding_mode.pt` and `prediction_model.pt` in the `saved_models` directory
     - IMPORTANT: you will need these models for the future steps
     - run `python train.py --contrastive` to run with contrastive loss
-2. run `python evaluate.py` to evaluate the saved models
+2. if running with the  `--contrastive` option, use `python generate_index.py` to build a FAISS index which will create and index in the `indexes` directory
+3. run `python evaluate.py` to evaluate the saved models
+    - run `python evaluate.py --contrastive` to evaluate using the embedding model and the FAISS index + majority voter as the prediction model
 
 ## Running the Application
 1. use `ray start --head` to start the ray cluster

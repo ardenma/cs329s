@@ -17,8 +17,8 @@ index_dir = os.path.join(cwd, "indexes")
 if not os.path.exists(index_dir): os.mkdir(index_dir)
 
 index = faiss.IndexFlatL2(embedding_size)   # build the index
+index = faiss.IndexIDMap(index)             # index returns IDs instead of embeddings
 print(index.is_trained)
-
 
 train_dataset = LiarDataset("train")
 train_ldr = DataLoader(train_dataset, batch_size=10)
@@ -32,7 +32,7 @@ if torch.cuda.is_available():
 with torch.no_grad():
     for (batch_idx, batch) in tqdm(enumerate(train_ldr)):
         embeddings = embedding_model(batch["data"]).cpu().numpy()
-        index.add(embeddings)
+        index.add_with_ids(embeddings, batch["id"].cpu().numpy())
 
 print(f"Indexed {index.ntotal} vectors.")
 
