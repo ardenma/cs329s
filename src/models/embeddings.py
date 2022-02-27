@@ -70,7 +70,7 @@ class BOWEmbedding:
 
     def load(self, filepath: str):
         assert os.path.exists(filepath), f"{filepath} does not exist!"
-        state_dict = torch.load(filepath)
-        self.bow_map = state_dict["bow_map"]
-        self.embedding_size = state_dict["embedding_size"]
-        self.fitted = state_dict["fitted"]
+        save_dict = torch.load(filepath)
+        self.bow_map = save_dict["bow_map"]
+        self.embedding_size = save_dict["embedding_size"]
+        self.fitted = save_dict["fitted"]
