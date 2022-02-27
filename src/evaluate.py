@@ -36,18 +36,19 @@ def main():
   logging.info("Staring evaluation...")
   predictions = []
   labels = []
-  for (batch_idx, batch) in tqdm(enumerate(test_ldr)):
-    embeddings = embedding_model(batch["data"]) 
-    y_pred = torch.argmax(prediction_model(embeddings), axis=-1)
+  with torch.no_grad():
+    for (batch_idx, batch) in tqdm(enumerate(test_ldr)):
+      embeddings = embedding_model(batch["data"]) 
+      y_pred = torch.argmax(prediction_model(embeddings), axis=-1)
 
-    if torch.cuda.is_available():
-      batch["label"] = batch["label"].to('cuda', dtype=torch.long)
-    y_label = batch["label"]
+      if torch.cuda.is_available():
+        batch["label"] = batch["label"].to('cuda', dtype=torch.long)
+      y_label = batch["label"]
 
-    for pred in y_pred:
-      predictions.append(int(pred))
-    for label in y_label:
-      labels.append(int(label))
+      for pred in y_pred:
+        predictions.append(int(pred))
+      for label in y_label:
+        labels.append(int(label))
   print(f"Test accuracy: {accuracy_score(labels, predictions)}")
 
 if __name__=="__main__":

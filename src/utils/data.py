@@ -7,6 +7,13 @@ from transformers import DistilBertTokenizer
 logging.getLogger().setLevel(logging.INFO)
 
 # Probably a more efficient way to do this: https://huggingface.co/docs/datasets/use_dataset.html
+LABELS = {0: "false", 1: "half-true", 2: "mostly-true", 3: "true", 4: "barely-true", 5: "pants-fire"}
+
+# Want -> 5 (pants-fire), 0 (false), 4 (barely-true), 1 (half-true), 2 (mostly-true), 3 (true)
+CONVERSION = {0:5, 1:0, 2:4, 3:1, 4:2, 5:3}
+
+def convert_label(label):
+    return CONVERSION[label]
 class LiarDataset(Dataset):
     def __init__(self, split: str="train", binary_labels: bool=False):
         super(LiarDataset, self).__init__()
@@ -28,7 +35,7 @@ class LiarDataset(Dataset):
         else:
             y = int(self.dataset[idx]['label'])
 
-        return {"data": x, "label": y}
+        return {"data": x, "label": convert_label(y)}
     
     def __len__(self):
         return len(self.dataset)

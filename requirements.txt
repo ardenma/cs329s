@@ -5,3 +5,4 @@ datasets==1.18.3
 nltk==3.6.7
 torch==1.10.2
 transformers==4.16.2
+faiss==1.5.3

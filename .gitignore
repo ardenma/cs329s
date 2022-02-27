@@ -1,5 +1,6 @@
 env/
 myproject.egg-info/
 src/saved_models/
+src/indexes/
 __pycache__/
 .DS_Store
