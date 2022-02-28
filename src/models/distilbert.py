@@ -33,6 +33,7 @@ class DistilBertForSequenceEmbedding(torch.nn.Module):
         assert os.path.exists(filepath), f"{filepath} does not exist!"
         save_dict = torch.load(filepath)
         self.embedding_size = save_dict["embedding_size"]
+        self.model = DistilBertForSequenceClassification.from_pretrained("distilbert-base-uncased", num_labels=self.embedding_size)
         self.load_state_dict(save_dict["state_dict"])
         logging.info(f"Loaded DistilBertForSequenceEmbedding model from: {filepath}")
     

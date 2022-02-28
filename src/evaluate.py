@@ -15,8 +15,7 @@ from models.voting import MajorityVoter
 from utils.data import LiarDataset
 logging.getLogger().setLevel(logging.INFO)
 
-embedding_size = 512
-num_labels = 6
+num_labels = 3
 
 cwd = pathlib.Path(__file__).parent.resolve()
 saved_models_dir = os.path.join(cwd, "saved_models")
@@ -27,7 +26,7 @@ def eval():
   test_ldr = DataLoader(test_dataset, batch_size=10)
 
   print("Loading models...")
-  embedding_model = DistilBertForSequenceEmbedding(embedding_size=embedding_size)
+  embedding_model = DistilBertForSequenceEmbedding()
   embedding_model.load(os.path.join(saved_models_dir, "embedding_model.pt"))
   prediction_model = SoftmaxHead(embedding_model.get_embedding_size(), test_dataset.get_num_classes())
   prediction_model.load(os.path.join(saved_models_dir, "prediction_model.pt"))
@@ -62,7 +61,7 @@ def eval_contrastive(args):
   id_map = LiarDataset("train", num_labels=num_labels).get_id_map()
 
   print("Loading models...")
-  embedding_model = DistilBertForSequenceEmbedding(embedding_size=embedding_size)
+  embedding_model = DistilBertForSequenceEmbedding()
   embedding_model.load(args.model_path)
   index = faiss.read_index(args.index_path)
   K = 5                          # we want to see 4 nearest neighbors
@@ -95,7 +94,9 @@ def eval_contrastive(args):
         predictions.append(int(pred))
       for label in y_label:
         labels.append(int(label))
-  
+
+  for pred, label in zip (predictions, labels):
+    print(f"pred: {pred} -> label: {label}")
   print(f"Test accuracy: {accuracy_score(labels, predictions)}")
 
 

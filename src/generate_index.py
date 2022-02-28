@@ -10,23 +10,22 @@ from tqdm import tqdm
 from models.distilbert import DistilBertForSequenceEmbedding
 from utils.data import LiarDataset
 
-embedding_size = 512
-
 cwd = pathlib.Path(__file__).parent.resolve()
 index_dir = os.path.join(cwd, "indexes")
 if not os.path.exists(index_dir): os.mkdir(index_dir)
 
 def main(args):
-    index = faiss.IndexFlatL2(embedding_size)   # build the index
-    index = faiss.IndexIDMap(index)             # index returns IDs instead of embeddings
-    print(index.is_trained)
-
     train_dataset = LiarDataset("train")
     train_ldr = DataLoader(train_dataset, batch_size=10)
 
-    embedding_model = DistilBertForSequenceEmbedding(embedding_size)
+    embedding_model = DistilBertForSequenceEmbedding()
     embedding_model.load(args.model_path)
+    model_name = os.path.basename(args.model_path).split("_")[0]
     embedding_model.eval()
+
+    index = faiss.IndexFlatL2(embedding_model.get_embedding_size())   # build the index
+    index = faiss.IndexIDMap(index)             # index returns IDs instead of embeddings
+    print(index.is_trained)
 
     if torch.cuda.is_available():
         print("GPU available!")
@@ -38,17 +37,13 @@ def main(args):
 
     print(f"Indexed {index.ntotal} vectors.")
 
-    if not os.path.exists(os.path.join(index_dir, "index")):
-        filename = os.path.join(index_dir, "index")
-
+    filename = os.path.join(index_dir, model_name + "-index")
+    if not os.path.exists(filename):
+        filename = os.path.join(index_dir, model_name + "-index")
+        faiss.write_index(index, filename)
+        print(f"Saved index to: {filename}")
     else:
-        i = 1
-        while os.path.exists(os.path.join(index_dir, f"tmp_index_{i}")):
-            i += 1
-        filename = os.path.join(index_dir, f"tmp_index_{i}")
-
-    faiss.write_index(index, filename)
-    print(f"Saved index to: {filename}")
+        print(f"Filename {filename} already exists, please delete it and try again.")
 
 if __name__=="__main__":
     parser = argparse.ArgumentParser(description='Build an index.')
