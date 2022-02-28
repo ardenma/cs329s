@@ -25,6 +25,8 @@ wandb.init(
   # mode="disabled"  # for debug
   )
 
+logging.info(f"\nwandb.config:\n{wandb.config}\n")
+
 # Create saved models dir if it doesn't exist yet
 cwd = pathlib.Path(__file__).parent.resolve()
 saved_models_dir = os.path.join(cwd, "saved_models")
