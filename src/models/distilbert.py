@@ -1,4 +1,5 @@
 import os
+import logging
 from turtle import forward
 from typing import Union, List, Callable
 
@@ -26,11 +27,12 @@ class DistilBertForSequenceEmbedding(torch.nn.Module):
     def save(self, filepath: str):
         assert not os.path.exists(filepath), f"{filepath} already exists!"
         torch.save({"embedding_size": self.embedding_size, "state_dict": self.state_dict()}, filepath)
-        print(f"Saved DistilBertForSequenceEmbedding model to: {filepath}")
+        logging.info(f"Saved DistilBertForSequenceEmbedding model to: {filepath}")
 
     def load(self, filepath: str):
         assert os.path.exists(filepath), f"{filepath} does not exist!"
         save_dict = torch.load(filepath)
         self.embedding_size = save_dict["embedding_size"]
         self.load_state_dict(save_dict["state_dict"])
+        logging.info(f"Loaded DistilBertForSequenceEmbedding model from: {filepath}")
     

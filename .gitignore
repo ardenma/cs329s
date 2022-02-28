@@ -3,5 +3,6 @@ myproject.egg-info/
 src/saved_models/
 src/indexes/
 src/wandb/
+wandb/
 __pycache__/
 .DS_Store

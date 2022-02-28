@@ -12,33 +12,40 @@ LABELS = {0: "false", 1: "half-true", 2: "mostly-true", 3: "true", 4: "barely-tr
 # Want -> 5 (pants-fire), 0 (false), 4 (barely-true), 1 (half-true), 2 (mostly-true), 3 (true)
 CONVERSION = {0:5, 1:0, 2:4, 3:1, 4:2, 5:3}
 
+ACCEPTABLE_NUM_LABELS = [2, 3, 6]
+
 def convert_label(label):
     return CONVERSION[label]
 
 def string_to_id(string: str) -> int:
     return int(string.split('.')[0])
 class LiarDataset(Dataset):
-    def __init__(self, split: str="train", binary_labels: bool=False):
+    def __init__(self, split: str="train", num_labels: int=3):
         super(LiarDataset, self).__init__()
         assert split in ("train", "validation", "test"), f"Unrecognized data split '{split}'"
         self.dataset = load_dataset("liar")[split]
-        self.binary_labels = binary_labels
+        self.num_labels = num_labels
+        assert num_labels in ACCEPTABLE_NUM_LABELS, f"num_labels should be 2, 3, or 6"
         self.tokenized = False
         logging.info(f"Loaded 'liar' dataset's {split} split")
 
     def __getitem__(self, idx: int) -> Dict[str, Union[int, float]]:
         if self.tokenized:
             keys = ["input_ids", "attention_mask"]
-            x = {key: self.dataset[idx][key] for key in keys}
+            data = {key: self.dataset[idx][key] for key in keys}
         else:
-            x = self.dataset[idx]['statement']
+            data = self.dataset[idx]['statement']
 
-        if self.binary_labels:
-            y = 1.0 if self.dataset[idx]['label'] > 0 and self.dataset[idx]['label'] < 4 else 0.0
+        label = convert_label(self.dataset[idx]['label'])
+
+        if self.num_labels == 2:
+            label = 1.0 if label > 1 else 0.0
+        elif self.num_labels == 3:
+            label = label // 2
         else:
-            y = int(self.dataset[idx]['label'])
+            label = label
 
-        return {"data": x, "label": convert_label(y), "id": string_to_id(self.dataset[idx]["id"])}
+        return {"data": data, "label": label, "id": string_to_id(self.dataset[idx]["id"])}
     
     def __len__(self):
         return len(self.dataset)
@@ -47,7 +54,7 @@ class LiarDataset(Dataset):
         return [sample['statement'] for sample in self.dataset]
     
     def get_num_classes(self) -> int:
-        return 2 if self.binary_labels else 6
+        return self.num_labels
     
     def get_id_map(self) -> Dict[int, Dict[str, Union[int, str]]]:
         return {string_to_id(ex["id"]): {"label": ex["label"], "statement": ex["statement"]} for ex in self.dataset}

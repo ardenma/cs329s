@@ -23,7 +23,7 @@ wandb.init(
   )
 
 def train():
-  train_dataset = LiarDataset("train")
+  train_dataset = LiarDataset("train", num_labels=wandb.config.num_labels)
   train_ldr = DataLoader(train_dataset, batch_size=wandb.config.batch_size)
 
   embedding_model = DistilBertForSequenceEmbedding(wandb.config.embedding_size)
@@ -81,12 +81,14 @@ def train_contrastive():
   cwd = pathlib.Path(__file__).parent.resolve()
   saved_models_dir = os.path.join(cwd, "saved_models")
   if not os.path.exists(saved_models_dir): os.mkdir(saved_models_dir)
+  experiment_dir = os.path.join(saved_models_dir, f"{wandb.run_name}")
+  if not os.path.exists(experiment_dir): os.mkdir(experiment_dir)
   
   # Generate filename
-  filename = os.path.join(saved_models_dir, f"{wandb.run.name}_embedding_model.pt")
+  filename = os.path.join(experiment_dir, f"{wandb.run.name}_embedding_model.pt")
 
   # Get Dataset
-  train_dataset = LiarDataset("train")
+  train_dataset = LiarDataset("train", num_labels=wandb.config.num_labels)
   train_ldr = DataLoader(train_dataset, batch_size=wandb.config.batch_size)
 
   # Load model
@@ -136,7 +138,7 @@ def train_contrastive():
 
 if __name__=="__main__":
     wandb.require(experiment="service")
-    parser = argparse.ArgumentParser(description='Process some integers.')
+    parser = argparse.ArgumentParser(description='Training script.')
     parser.add_argument('--contrastive', action='store_true')
     args = parser.parse_args()
 

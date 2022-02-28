@@ -16,12 +16,14 @@ from utils.data import LiarDataset
 logging.getLogger().setLevel(logging.INFO)
 
 embedding_size = 512
+num_labels = 6
+
 cwd = pathlib.Path(__file__).parent.resolve()
 saved_models_dir = os.path.join(cwd, "saved_models")
 index_dir = os.path.join(cwd, "indexes")
                       
 def eval():
-  test_dataset = LiarDataset("test")
+  test_dataset = LiarDataset("test", num_labels=num_labels)
   test_ldr = DataLoader(test_dataset, batch_size=10)
 
   print("Loading models...")
@@ -54,15 +56,15 @@ def eval():
         labels.append(int(label))
   print(f"Test accuracy: {accuracy_score(labels, predictions)}")
 
-def eval_contrastive():
-  test_dataset = LiarDataset("test")
+def eval_contrastive(args):
+  test_dataset = LiarDataset("test", num_labels=num_labels)
   test_ldr = DataLoader(test_dataset, batch_size=10)
-  id_map = LiarDataset("train").get_id_map()
+  id_map = LiarDataset("train", num_labels=num_labels).get_id_map()
 
   print("Loading models...")
   embedding_model = DistilBertForSequenceEmbedding(embedding_size=embedding_size)
-  embedding_model.load(os.path.join(saved_models_dir, "embedding_model.pt"))
-  index = faiss.read_index(os.path.join(index_dir, "index"))
+  embedding_model.load(args.model_path)
+  index = faiss.read_index(args.index_path)
   K = 5                          # we want to see 4 nearest neighbors
   prediction_model = MajorityVoter()
   print("Done!")
@@ -98,11 +100,21 @@ def eval_contrastive():
 
 
 if __name__=="__main__":
-    parser = argparse.ArgumentParser(description='Process some integers.')
+    parser = argparse.ArgumentParser(description='Evaluate a model.')
     parser.add_argument('--contrastive', action='store_true')
+    parser.add_argument('--model_path', type=str)
+    parser.add_argument('--index_path', type=str)
     args = parser.parse_args()
 
+    # TODO add model_path arg for eval()
     if args.contrastive:
-      eval_contrastive()
+      if not os.path.exists(args.model_path):
+          raise Exception("Need to specify a valid model path!")
+      if not os.path.exists(args.index_path):
+          raise Exception("Need to specify a valid index path!")
+
+
+    if args.contrastive:
+      eval_contrastive(args)
     else:
       eval()

@@ -14,3 +14,6 @@ embedding_size:
 same_label_multiplier: 
   desc:  Multiplier for same label embedding pairs in contrastive loss
   value: 5
+num_labels:
+  desc: Number of labels (2, 3, or 6)
+  value: 3
