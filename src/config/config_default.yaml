@@ -5,8 +5,11 @@ epochs:
 batch_size:
   desc: Size of each mini-batch
   value: 10
+optimizer:
+  desc: Optimizer name (Adam or AdamW)
+  value: AdamW
 learning_rate:
-  desc: Learning rate for optimizer (Adam)
+  desc: Learning rate for optimizer
   value: 0.001
 embedding_size: 
   desc: Size of embeddings to use

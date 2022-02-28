@@ -12,6 +12,8 @@ from models.distilbert import DistilBertForSequenceEmbedding
 from models.heads import SoftmaxHead
 from utils.data import LiarDataset
 from utils.loss import contrastive_loss
+from utils.optim import get_optimizer
+
 logging.getLogger().setLevel(logging.INFO)
 cwd = pathlib.Path(__file__).parent.resolve()
 
@@ -19,8 +21,16 @@ wandb.init(
   project="cs329s", 
   entity="ardenma", 
   config = os.path.join(cwd, "config", "config_default.yaml"),
-  reinit=True
+  reinit=True,
+  # mode="disabled"  # for debug
   )
+
+# Create saved models dir if it doesn't exist yet
+cwd = pathlib.Path(__file__).parent.resolve()
+saved_models_dir = os.path.join(cwd, "saved_models")
+if not os.path.exists(saved_models_dir): os.mkdir(saved_models_dir)
+experiment_dir = os.path.join(saved_models_dir, f"{wandb.run.name}")
+if not os.path.exists(experiment_dir): os.mkdir(experiment_dir)
 
 def train():
   train_dataset = LiarDataset("train", num_labels=wandb.config.num_labels)
@@ -36,7 +46,8 @@ def train():
 
   criterion = torch.nn.CrossEntropyLoss(reduction='mean')
   parameters = list(embedding_model.parameters()) + list(prediction_model.parameters())
-  optimizer = torch.optim.Adam(parameters, lr=wandb.config.learning_rate)
+  optimizer = get_optimizer(name=wandb.config.optimizer, parameters=parameters, lr=wandb.config.learning_rate)
+  logging.info(f"Using optimizer: {wandb.config.optimizer}.")
 
   logging.info("Starting training loop...")
   for epoch in tqdm(range(wandb.config.epochs)):
@@ -67,23 +78,12 @@ def train():
   logging.info("Done.")
 
   # Saving model
-  cwd = pathlib.Path(__file__).parent.resolve()
-  saved_models_dir = os.path.join(cwd, "saved_models")
-  if not os.path.exists(saved_models_dir): os.mkdir(saved_models_dir)
-
   print("Saving models...")
-  embedding_model.save(os.path.join(saved_models_dir, f"{wandb.run.name}_embedding_model.pt"))
-  prediction_model.save(os.path.join(saved_models_dir, f"{wandb.run.name}_prediction_model.pt"))
+  embedding_model.save(os.path.join(experiment_dir, f"{wandb.run.name}_embedding_model.pt"))
+  prediction_model.save(os.path.join(experiment_dir, f"{wandb.run.name}_prediction_model.pt"))
   print("Done!")
 
 def train_contrastive():
-  # Create saved models dir if it doesn't exist yet
-  cwd = pathlib.Path(__file__).parent.resolve()
-  saved_models_dir = os.path.join(cwd, "saved_models")
-  if not os.path.exists(saved_models_dir): os.mkdir(saved_models_dir)
-  experiment_dir = os.path.join(saved_models_dir, f"{wandb.run_name}")
-  if not os.path.exists(experiment_dir): os.mkdir(experiment_dir)
-  
   # Generate filename
   filename = os.path.join(experiment_dir, f"{wandb.run.name}_embedding_model.pt")
 
@@ -98,7 +98,9 @@ def train_contrastive():
     embedding_model.to('cuda')
 
   # Create optimizer
-  optimizer = torch.optim.Adam(embedding_model.parameters(), lr=wandb.config.learning_rate)
+  optimizer = get_optimizer(name=wandb.config.optimizer, parameters=embedding_model.parameters(), lr=wandb.config.learning_rate)
+  logging.info(f"Using optimizer: {wandb.config.optimizer}.")
+
 
   logging.info("Starting training loop...")
   for epoch in tqdm(range(wandb.config.epochs)):
