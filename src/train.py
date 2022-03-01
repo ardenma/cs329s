@@ -8,11 +8,14 @@ import wandb
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
+from evaluate import eval_contrastive
 from models.distilbert import DistilBertForSequenceEmbedding
 from models.heads import SoftmaxHead
+from models.voting import MajorityVoter
 from utils.data import LiarDataset
 from utils.loss import contrastive_loss
 from utils.optim import get_optimizer
+from utils.index import create_index
 
 logging.getLogger().setLevel(logging.INFO)
 cwd = pathlib.Path(__file__).parent.resolve()
@@ -92,12 +95,19 @@ def train_contrastive():
   # Get Dataset
   train_dataset = LiarDataset("train", num_labels=wandb.config.num_labels)
   train_ldr = DataLoader(train_dataset, batch_size=wandb.config.batch_size)
+  dev_dataset = LiarDataset("validation", num_labels=wandb.config.num_labels)
+  dev_ldr = DataLoader(dev_dataset, batch_size=wandb.config.batch_size)
 
   # Load model
   embedding_model = DistilBertForSequenceEmbedding(wandb.config.embedding_size)
   if torch.cuda.is_available():
     print("GPU available!")
     embedding_model.to('cuda')
+  
+  # For eval
+  prediction_model = MajorityVoter()
+  id_map = train_dataset.get_id_map()
+  best_accuracy = 0
 
   # Create optimizer
   optimizer = get_optimizer(name=wandb.config.optimizer, parameters=embedding_model.parameters(), lr=wandb.config.learning_rate)
@@ -129,7 +139,14 @@ def train_contrastive():
       loss.backward()
       optimizer.step()
     
+    # Evaluation
     if epoch % 10 == 0:
+      index = create_index(embedding_model, train_ldr)
+      test_accuracy = eval_contrastive(embedding_model, index, prediction_model, wandb.config.K, id_map, dev_ldr)
+      if (test_accuracy > best_accuracy):
+        wandb.run.summary["best_accuracy"] = test_accuracy
+        wandb.run.summary["best_epoch"] = epoch
+        best_accuracy = test_accuracy
       embedding_model.save(f"{filename.split('.')[0]}_epoch_{epoch}.pt")
   
   logging.info("Done.")

@@ -13,9 +13,11 @@ from models.distilbert import DistilBertForSequenceEmbedding
 from models.heads import SoftmaxHead
 from models.voting import MajorityVoter
 from utils.data import LiarDataset
+from utils.index import create_index
 logging.getLogger().setLevel(logging.INFO)
 
 num_labels = 3
+
 
 cwd = pathlib.Path(__file__).parent.resolve()
 saved_models_dir = os.path.join(cwd, "saved_models")
@@ -55,7 +57,7 @@ def eval():
         labels.append(int(label))
   print(f"Test accuracy: {accuracy_score(labels, predictions)}")
 
-def eval_contrastive(args):
+def eval_wrapper(args):
   test_dataset = LiarDataset("test", num_labels=num_labels)
   test_ldr = DataLoader(test_dataset, batch_size=10)
   id_map = LiarDataset("train", num_labels=num_labels).get_id_map()
@@ -63,11 +65,20 @@ def eval_contrastive(args):
   print("Loading models...")
   embedding_model = DistilBertForSequenceEmbedding()
   embedding_model.load(args.model_path)
-  index = faiss.read_index(args.index_path)
-  K = 5                          # we want to see 4 nearest neighbors
+  if args.index_path:
+    index = faiss.read_index(args.index_path)
+  else:
+    train_dataset = LiarDataset("train", num_labels=num_labels)
+    train_ldr = DataLoader(train_dataset, batch_size=10)
+    index = create_index(embedding_model, train_ldr)
   prediction_model = MajorityVoter()
   print("Done!")
+  
+  K = 3
 
+  eval_contrastive(embedding_model, index, prediction_model, K, id_map, test_ldr)
+  
+def eval_contrastive(embedding_model, index: faiss.IndexIDMap, prediction_model, K: int, id_map, dataloader: DataLoader):
   if torch.cuda.is_available():
     print("GPU available!")
     embedding_model.to('cuda')
@@ -76,7 +87,7 @@ def eval_contrastive(args):
   predictions = []
   labels = []
   with torch.no_grad():
-    for (batch_idx, batch) in tqdm(enumerate(test_ldr)):
+    for (batch_idx, batch) in tqdm(enumerate(dataloader)):
       # Generate embeddings
       embeddings = embedding_model(batch["data"]) 
       embeddings = torch.nn.functional.normalize(embeddings, p=2.0, dim=-1, eps=1e-12)
@@ -95,9 +106,10 @@ def eval_contrastive(args):
       for label in y_label:
         labels.append(int(label))
 
-  for pred, label in zip (predictions, labels):
-    print(f"pred: {pred} -> label: {label}")
-  print(f"Test accuracy: {accuracy_score(labels, predictions)}")
+  accuracy = accuracy_score(labels, predictions)
+  print(f"Eval accuracy: {accuracy}")
+
+  return accuracy
 
 
 if __name__=="__main__":
@@ -111,11 +123,9 @@ if __name__=="__main__":
     if args.contrastive:
       if not os.path.exists(args.model_path):
           raise Exception("Need to specify a valid model path!")
-      if not os.path.exists(args.index_path):
-          raise Exception("Need to specify a valid index path!")
 
 
     if args.contrastive:
-      eval_contrastive(args)
+      eval_wrapper(args)
     else:
       eval()

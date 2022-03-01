@@ -13,10 +13,13 @@ learning_rate:
   value: 0.001
 embedding_size: 
   desc: Size of embeddings to use
-  value: 64
+  value: 32
 same_label_multiplier: 
   desc:  Multiplier for same label embedding pairs in contrastive loss
   value: 5
 num_labels:
   desc: Number of labels (2, 3, or 6)
+  value: 3
+K:
+  desc: number of embeddings to use in KNN majority voting
   value: 3

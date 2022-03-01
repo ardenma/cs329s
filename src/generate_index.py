@@ -9,6 +9,7 @@ from tqdm import tqdm
 
 from models.distilbert import DistilBertForSequenceEmbedding
 from utils.data import LiarDataset
+from utils.index import create_index
 
 cwd = pathlib.Path(__file__).parent.resolve()
 index_dir = os.path.join(cwd, "indexes")
@@ -23,19 +24,7 @@ def main(args):
     model_name = os.path.basename(args.model_path).split("_")[0]
     embedding_model.eval()
 
-    index = faiss.IndexFlatL2(embedding_model.get_embedding_size())   # build the index
-    index = faiss.IndexIDMap(index)             # index returns IDs instead of embeddings
-    print(index.is_trained)
-
-    if torch.cuda.is_available():
-        print("GPU available!")
-        embedding_model.to('cuda')
-    with torch.no_grad():
-        for (batch_idx, batch) in tqdm(enumerate(train_ldr)):
-            embeddings = embedding_model(batch["data"]).cpu().numpy()
-            index.add_with_ids(embeddings, batch["id"].cpu().numpy())
-
-    print(f"Indexed {index.ntotal} vectors.")
+    index = create_index(embedding_model, train_ldr)
 
     filename = os.path.join(index_dir, model_name + "-index")
     if not os.path.exists(filename):
