@@ -11,18 +11,18 @@ def contrastive_loss(embeddings: torch.tensor, labels: torch.tensor, same_label_
     similarity_matrix = normalized_embs @ normalized_embs.T
     logging.debug(f"similarity matrix: {similarity_matrix}")
 
-    # B X B
+    # B X B (upper right triangular)
     label_distances = torch.zeros(len(labels), len(labels)).to(normalized_embs)
 
     for row in range(len(labels)):
-        for col in range(len(labels)):
+        for col in range(row, len(labels)):
             label_distances[row, col] = torch.abs(labels[row] - labels[col])
     
     label_distances = label_distances * -1
 
     # Make 0 distance elements large (since want same label embeddiungs to have small dist)
     for row in range(len(labels)):
-        for col in range(len(labels)):
+        for col in range(row, len(labels)):
             if row != col and label_distances[row, col] == 0:
                 label_distances[row, col] = same_label_multiplier  # arbitrary
 
