@@ -23,3 +23,6 @@ num_labels:
 K:
   desc: number of embeddings to use in KNN majority voting
   value: 3
+loss_type:
+  desc: type of loss to use (contrastive, normal, hybrid)
+  value: normal

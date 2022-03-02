@@ -1,7 +1,6 @@
 import os
 import logging
 import pathlib
-import argparse
 
 import torch
 import wandb
@@ -181,11 +180,10 @@ def train_contrastive():
 
 if __name__=="__main__":
     wandb.require(experiment="service")
-    parser = argparse.ArgumentParser(description='Training script.')
-    parser.add_argument('--contrastive', action='store_true')
-    args = parser.parse_args()
 
-    if args.contrastive:
+    if wandb.config.loss_type == "contrastive":
       train_contrastive()
-    else:
+    elif wandb.config.loss_type == "normal":
       train()
+    else:
+      raise Exception(f"Unknown loss type: '{wandb.config.loss_type}'")
