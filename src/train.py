@@ -23,9 +23,9 @@ cwd = pathlib.Path(__file__).parent.resolve()
 wandb.init(
   project="cs329s", 
   entity="ardenma", 
-  config = os.path.join(cwd, "config", "config_default.yaml"),
+  config=os.path.join(cwd, "config", "config_default.yaml"),
   reinit=True,
-  # mode="disabled"  # for debug
+  mode="disabled"  # for debug
   )
 
 logging.info(f"\nwandb.config:\n{wandb.config}\n")
@@ -38,11 +38,24 @@ experiment_dir = os.path.join(saved_models_dir, f"{wandb.run.name}")
 if not os.path.exists(experiment_dir): os.mkdir(experiment_dir)
 
 def train():
+  # Generate filename
+  embedding_model_filename = os.path.join(experiment_dir, f"{wandb.run.name}_embedding_model.pt")
+  prediction_model_filename = os.path.join(experiment_dir, f"{wandb.run.name}_embedding_model.pt")
+
+  # Get Dataset
   train_dataset = LiarDataset("train", num_labels=wandb.config.num_labels)
   train_ldr = DataLoader(train_dataset, batch_size=wandb.config.batch_size)
+  dev_dataset = LiarDataset("validation", num_labels=wandb.config.num_labels)
+  dev_ldr = DataLoader(dev_dataset, batch_size=wandb.config.batch_size)
 
+  # Load Models
   embedding_model = DistilBertForSequenceEmbedding(wandb.config.embedding_size)
   prediction_model = SoftmaxHead(input_length=wandb.config.embedding_size, num_classes=train_dataset.get_num_classes())
+
+  # For eval
+  eval_model = MajorityVoter()
+  id_map = train_dataset.get_id_map()
+  best_accuracy = 0
 
   if torch.cuda.is_available():
     print("GPU available!")
@@ -79,13 +92,24 @@ def train():
       # Backward pass
       loss.backward()
       optimizer.step()
-  
+
+    # Evaluation
+    if epoch % 10 == 0:
+      index = create_index(embedding_model, train_ldr)
+      test_accuracy = eval_contrastive(embedding_model, index, eval_model, wandb.config.K, id_map, dev_ldr)
+      if (test_accuracy > best_accuracy):
+        wandb.run.summary["best_accuracy"] = test_accuracy
+        wandb.run.summary["best_epoch"] = epoch
+        best_accuracy = test_accuracy
+        embedding_model.save(f"{embedding_model_filename.split('.')[0]}_epoch_{epoch}_{test_accuracy:.3f}.pt")
+        prediction_model.save(f"{prediction_model_filename.split('.')[0]}_epoch_{epoch}_{test_accuracy:.3f}.pt")
+    
   logging.info("Done.")
 
   # Saving model
   print("Saving models...")
-  embedding_model.save(os.path.join(experiment_dir, f"{wandb.run.name}_embedding_model.pt"))
-  prediction_model.save(os.path.join(experiment_dir, f"{wandb.run.name}_prediction_model.pt"))
+  embedding_model.save(embedding_model_filename)
+  prediction_model.save(prediction_model_filename)
   print("Done!")
 
 def train_contrastive():
@@ -147,11 +171,9 @@ def train_contrastive():
         wandb.run.summary["best_accuracy"] = test_accuracy
         wandb.run.summary["best_epoch"] = epoch
         best_accuracy = test_accuracy
-      embedding_model.save(f"{filename.split('.')[0]}_epoch_{epoch}.pt")
+        embedding_model.save(f"{filename.split('.')[0]}_epoch_{epoch}_{test_accuracy:.3f}.pt")
   
   logging.info("Done.")
-
-
 
   print("Saving models...")
   embedding_model.save(filename)
