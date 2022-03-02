@@ -8,7 +8,7 @@ class SoftmaxHead(torch.nn.Module):
          self.input_length = input_length
          self.num_classes = num_classes
          self.linear = torch.nn.Linear(input_length, num_classes)
-         self.softmax = torch.nn.Softmax(-1)
+         self.softmax = torch.nn.LogSoftmax(-1)
 
       def forward(self, x: torch.tensor) -> torch.tensor:
          y_pred = self.softmax(self.linear(x))

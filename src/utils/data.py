@@ -1,6 +1,8 @@
 import logging
 from typing import Dict, List, Callable, Union
 
+import torch
+import numpy as np
 from torch.utils.data import Dataset
 from datasets import load_dataset
 from transformers import DistilBertTokenizer
@@ -14,8 +16,15 @@ CONVERSION = {0:5, 1:0, 2:4, 3:1, 4:2, 5:3}
 
 ACCEPTABLE_NUM_LABELS = [2, 3, 6]
 
-def convert_label(label):
-    return CONVERSION[label]
+def convert_label(label: int, num_labels: int):
+    label = CONVERSION[label]
+    if num_labels == 2:
+        label = 1.0 if label > 1 else 0.0
+    elif num_labels == 3:
+        label = label // 2
+    else:
+        label = label
+    return label
 
 def string_to_id(string: str) -> int:
     return int(string.split('.')[0])
@@ -36,14 +45,7 @@ class LiarDataset(Dataset):
         else:
             data = self.dataset[idx]['statement']
 
-        label = convert_label(self.dataset[idx]['label'])
-
-        if self.num_labels == 2:
-            label = 1.0 if label > 1 else 0.0
-        elif self.num_labels == 3:
-            label = label // 2
-        else:
-            label = label
+        label = convert_label(self.dataset[idx]['label'], self.num_labels)
 
         return {"data": data, "label": label, "id": string_to_id(self.dataset[idx]["id"])}
     
@@ -56,6 +58,30 @@ class LiarDataset(Dataset):
     def get_num_classes(self) -> int:
         return self.num_labels
     
+    def get_class_balance(self, as_tensor: bool=False) -> Union[np.array, torch.tensor]:
+        class_balance = np.zeros(self.num_labels)
+        for ex in self.dataset:
+            label = convert_label(ex['label'], self.num_labels)
+            class_balance[label] += 1
+        
+        class_balance = np.array(list(map(lambda x: x / len(self.dataset), class_balance)))
+        if as_tensor:
+            class_balance = torch.tensor(class_balance, dtype=torch.float)
+
+        return class_balance
+
+    def get_class_weight_for_train(self, as_tensor: bool=False) -> Union[np.array, torch.tensor]:
+        class_balance = np.zeros(self.num_labels)
+        for ex in self.dataset:
+            label = convert_label(ex['label'], self.num_labels)
+            class_balance[label] += 1
+        
+        inv_class_balance = np.array(list(map(lambda x: len(self.dataset) / x, class_balance)))
+        if as_tensor:
+            inv_class_balance = torch.tensor(inv_class_balance, dtype=torch.float)
+
+        return inv_class_balance
+
     def get_id_map(self) -> Dict[int, Dict[str, Union[int, str]]]:
         return {string_to_id(ex["id"]): {"label": ex["label"], "statement": ex["statement"]} for ex in self.dataset}
 

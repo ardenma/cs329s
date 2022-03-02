@@ -105,6 +105,9 @@ def eval_contrastive(embedding_model, index: faiss.IndexIDMap, prediction_model,
         predictions.append(int(pred))
       for label in y_label:
         labels.append(int(label))
+    
+  for label, pred in zip(labels, predictions):
+    print(f"model predicted {pred} with label {label}")
 
   accuracy = accuracy_score(labels, predictions)
   print(f"Eval accuracy: {accuracy}")

@@ -24,7 +24,7 @@ wandb.init(
   entity="ardenma", 
   config=os.path.join(cwd, "config", "config_default.yaml"),
   reinit=True,
-  mode="disabled"  # for debug
+  # mode="disabled"  # for debug
   )
 
 logging.info(f"\nwandb.config:\n{wandb.config}\n")
@@ -39,17 +39,19 @@ if not os.path.exists(experiment_dir): os.mkdir(experiment_dir)
 def train():
   # Generate filename
   embedding_model_filename = os.path.join(experiment_dir, f"{wandb.run.name}_embedding_model.pt")
-  prediction_model_filename = os.path.join(experiment_dir, f"{wandb.run.name}_embedding_model.pt")
+  prediction_model_filename = os.path.join(experiment_dir, f"{wandb.run.name}_prediction_model.pt")
 
   # Get Dataset
   train_dataset = LiarDataset("train", num_labels=wandb.config.num_labels)
   train_ldr = DataLoader(train_dataset, batch_size=wandb.config.batch_size)
   dev_dataset = LiarDataset("validation", num_labels=wandb.config.num_labels)
   dev_ldr = DataLoader(dev_dataset, batch_size=wandb.config.batch_size)
+  class_weight = train_dataset.get_class_weight_for_train(as_tensor=True)
 
   # Load Models
   embedding_model = DistilBertForSequenceEmbedding(wandb.config.embedding_size)
   prediction_model = SoftmaxHead(input_length=wandb.config.embedding_size, num_classes=train_dataset.get_num_classes())
+  criterion = torch.nn.CrossEntropyLoss(weight=class_weight, reduction='mean')
 
   # For eval
   eval_model = MajorityVoter()
@@ -60,8 +62,8 @@ def train():
     print("GPU available!")
     embedding_model.to('cuda')
     prediction_model.to('cuda')
+    criterion.to('cuda')
 
-  criterion = torch.nn.CrossEntropyLoss(reduction='mean')
   parameters = list(embedding_model.parameters()) + list(prediction_model.parameters())
   optimizer = get_optimizer(name=wandb.config.optimizer, parameters=parameters, lr=wandb.config.learning_rate)
   logging.info(f"Using optimizer: {wandb.config.optimizer}.")
@@ -135,7 +137,6 @@ def train_contrastive():
   # Create optimizer
   optimizer = get_optimizer(name=wandb.config.optimizer, parameters=embedding_model.parameters(), lr=wandb.config.learning_rate)
   logging.info(f"Using optimizer: {wandb.config.optimizer}.")
-
 
   logging.info("Starting training loop...")
   for epoch in tqdm(range(wandb.config.epochs)):

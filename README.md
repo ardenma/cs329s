@@ -11,7 +11,6 @@
 ## Training Models
 1. run `python train.py` which should create two models `embedding_mode.pt` and `prediction_model.pt` in the `saved_models` directory
     - IMPORTANT: you will need these models for the future steps
-    - run `python train.py --contrastive` to run with contrastive loss
     - use `config/config_default` to configure your run, these settings will be read by wandb
 2. if running with the  `--contrastive` option, use `python generate_index.py --model_path PATH_TO_MODEL` to build a FAISS index which will create and index in the `indexes` directory
 3. run `python evaluate.py` to evaluate the saved models
