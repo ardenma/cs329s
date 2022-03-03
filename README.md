@@ -7,7 +7,7 @@
 3. install the project as a package (for imports to work) with `pip install -e .`
 
 ## Training Models
-1. Run `cd src` to enter the `src` directory, and then run `python train.py` which should create two models `embedding_mode.pt` and `prediction_model.pt` in the `saved_models` directory
+1. Run `python src/train.py` which should create two models `embedding_mode.pt` and `prediction_model.pt` in the `saved_models` directory
     - IMPORTANT: you will need these models for the future steps
 
 ## Running the Application
