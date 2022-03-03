@@ -14,21 +14,24 @@ def contrastive_loss(embeddings: torch.tensor, labels: torch.tensor, num_labels:
     similarity_matrix = normalized_embs @ normalized_embs.T
     logging.debug(f"similarity matrix: {similarity_matrix}")
 
-    # B X B (upper right triangular)
-    label_distances = torch.zeros(batch_size, batch_size).to(normalized_embs)
 
+    # B X B (upper right triangular), using label distances as "importance" weights
+    label_distances = torch.zeros(batch_size, batch_size).to(normalized_embs)
     for row in range(batch_size):
         for col in range(row, batch_size):
             label_distances[row, col] = torch.abs(labels[row] - labels[col])
-    
-    label_distances = label_distances * -1
-    label_distances += max_label_distance
 
-    # Make 0 distance elements large (since want same label embeddiungs to have small dist)
+    
+    # label_distances = max_label_distance - label_distances
+
+    # If same label, want to maximize similarity so need to make contribution negative
+    # Ignore self-similarity
+    same_label_pair_count = 0
     for row in range(batch_size):
         for col in range(row, batch_size):
-            if row != col and label_distances[row, col] == 0:
-                label_distances[row, col] = same_label_multiplier  # arbitrary
+            if label_distances[row, col] == 0 and row != col:
+                label_distances[row, col] = -same_label_multiplier  # arbitrary
+                same_label_pair_count += 1
 
     logging.debug(f"label_distances: {label_distances}")
 
@@ -40,10 +43,12 @@ def contrastive_loss(embeddings: torch.tensor, labels: torch.tensor, num_labels:
     loss = torch.sum(similarity_matrix) 
     logging.debug(f"loss: {loss}")
 
-    # Normalize to make loss closer to 1
-    normalizer = (((batch_size * batch_size) - batch_size) / 2.0) * (max_label_distance)
-    same_label_normalizer_offset = batch_size * same_label_multiplier
-    normalized_loss = loss / (normalizer + same_label_normalizer_offset)
-    logging.debug(f"normalizer: {normalizer}, same_label_normalizer: {same_label_normalizer_offset}, loss (before): {loss}, loss (after): {normalized_loss}")
+    # Perform max-min normalization on loss
+    num_active = (((batch_size * batch_size) - batch_size) / 2.0)
+    diff_label_pair_count = num_active - same_label_pair_count
+    max_loss = diff_label_pair_count * (max_label_distance)
+    min_loss = - (same_label_pair_count * same_label_multiplier)
+    normalized_loss = (loss - min_loss) / (max_loss - min_loss)
+    logging.debug(f"max_loss: {max_loss}, min_loss: {min_loss}, loss (before): {loss}, loss (after): {normalized_loss}")
     
     return normalized_loss
