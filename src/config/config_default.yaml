@@ -29,6 +29,6 @@ K:
 loss_type:
   desc: type of loss to use (contrastive, normal, hybrid)
   value: hybrid
-metric:
-  desc: evaluation metric (accuracy, f1_score)
+save_metric:
+  desc: which metric to save based on (accuracy, f1_score)
   value: f1_score

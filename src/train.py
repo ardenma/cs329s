@@ -44,8 +44,8 @@ def train():
   # Get Dataset
   train_dataset = LiarDataset("train", num_labels=wandb.config.num_labels)
   train_ldr = DataLoader(train_dataset, batch_size=wandb.config.batch_size)
-  dev_dataset = LiarDataset("validation", num_labels=wandb.config.num_labels)
-  dev_ldr = DataLoader(dev_dataset, batch_size=wandb.config.batch_size)
+  validation_dataset = LiarDataset("validation", num_labels=wandb.config.num_labels)
+  validation_ldr = DataLoader(validation_dataset, batch_size=wandb.config.batch_size)
   class_weight = train_dataset.get_class_weight_for_train(as_tensor=True)
 
   # Load Models
@@ -57,7 +57,7 @@ def train():
   # For eval
   eval_model = MajorityVoter()
   id_map = train_dataset.get_id_map()
-  best_metric = 0
+  best_metrics = {"accuracy": 0, "f1_score": 0}
 
   if torch.cuda.is_available():
     print("GPU available!")
@@ -109,23 +109,35 @@ def train():
     # Evaluation
     if epoch % wandb.config.eval_frequency == 0:
       index = create_index(embedding_model, train_ldr)
-      test_metric = eval_contrastive(wandb.config.metric, embedding_model, index, eval_model, wandb.config.K, id_map, dev_ldr)
-      wandb.log({wandb.config.metric: test_metric, "epoch": epoch})
-      if (test_metric > best_metric):
-        wandb.run.summary[f"best_{wandb.config.metric}"] = test_metric
-        wandb.run.summary["best_epoch"] = epoch
 
-        best_metric = test_metric
-        embedding_model.save(f"{embedding_model_filename.split('.')[0]}_epoch_{epoch}_{test_metric:.3f}.pt")
+      # Log validation metrics
+      validation_metrics = eval_contrastive(embedding_model, index, eval_model, wandb.config.K, id_map, validation_ldr)
+      validation_metrics["epoch"] = epoch
+      wandb.log(validation_metrics)
+
+      # Update best metrics
+      for metric in best_metrics.keys():
+        if (validation_metrics[metric] > best_metrics[metric]):
+          best_metrics[metric] = validation_metrics[metric]
+          wandb.run.summary[f"best_{metric}"] = validation_metrics[metric]
+          wandb.run.summary[f"best_{metric}_epoch"] = epoch
+
+      # Save file if we have a new best save metric
+      save_metric = validation_metrics[wandb.config.save_metric]
+      if (save_metric > best_metrics[wandb.config.save_metric]):
+
+        # Save model
+        model_suffix = f"_epoch_{epoch}_{wandb.config.save_metric}_{save_metric:.3f}.pt"
+        model_save_path = embedding_model_filename.split('.')[0] + model_suffix
+        embedding_model.save(model_save_path)
         
         # Artifact tracking
         artifact = wandb.Artifact(f'{wandb.run.name}-{wandb.config.num_labels}-labels', type='distilbert-embedding-model')
-        artifact.add_file(f"{embedding_model_filename.split('.')[0]}_epoch_{epoch}_{test_metric:.3f}.pt", 
-                          name=f"{wandb.run.name}_epoch_{epoch}_{test_metric:.3f}.pt")
+        artifact.add_file(model_save_path, name=f"{wandb.run.name}{model_suffix}")
         run.log_artifact(artifact)
 
         if wandb.config.loss_type != "contrastive":
-          prediction_model.save(f"{prediction_model_filename.split('.')[0]}_epoch_{epoch}_{test_metric:.3f}.pt")
+          prediction_model.save(f"{prediction_model_filename.split('.')[0]}_epoch_{epoch}_{save_metric:.3f}.pt")
     
   logging.info("Done.")
 

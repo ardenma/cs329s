@@ -12,6 +12,7 @@
 1. run `python train.py` which should create two models `embedding_mode.pt` and `prediction_model.pt` in the `saved_models` directory
     - IMPORTANT: you will need these models for the future steps
     - use `config/config_default` to configure your run, these settings will be read by wandb
+    - to run a sweep, simply configure `config/sweep.py`, go to the `src` directory, run `wandb sweep config/sweep.py` and then copy and paste the command that is outputted to launch the wandb agent (prepend the agent launch command with `nohup` if the process is dying after a while).
 2. run `python evaluate.py` to evaluate the saved models
     - run `python evaluate.py --model_path PATH_TO_MODEL` to evaluate using the embedding model and the FAISS index + majority voter as the prediction model
 
