@@ -113,6 +113,7 @@ def train():
       if (test_accuracy > best_accuracy):
         wandb.run.summary["best_accuracy"] = test_accuracy
         wandb.run.summary["best_epoch"] = epoch
+        
         best_accuracy = test_accuracy
         embedding_model.save(f"{embedding_model_filename.split('.')[0]}_epoch_{epoch}_{test_accuracy:.3f}.pt")
         

@@ -12,9 +12,8 @@
 1. run `python train.py` which should create two models `embedding_mode.pt` and `prediction_model.pt` in the `saved_models` directory
     - IMPORTANT: you will need these models for the future steps
     - use `config/config_default` to configure your run, these settings will be read by wandb
-2. if running with the  `--contrastive` option, use `python generate_index.py --model_path PATH_TO_MODEL` to build a FAISS index which will create and index in the `indexes` directory
-3. run `python evaluate.py` to evaluate the saved models
-    - run `python evaluate.py --contrastive --model_path PATH_TO_MODEL --index_path PATH_TO_INDEX` to evaluate using the embedding model and the FAISS index + majority voter as the prediction model
+2. run `python evaluate.py` to evaluate the saved models
+    - run `python evaluate.py --model_path PATH_TO_MODEL` to evaluate using the embedding model and the FAISS index + majority voter as the prediction model
 
 ## Running the Application
 1. use `ray start --head` to start the ray cluster

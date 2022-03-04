@@ -23,40 +23,6 @@ cwd = pathlib.Path(__file__).parent.resolve()
 saved_models_dir = os.path.join(cwd, "saved_models")
 index_dir = os.path.join(cwd, "indexes")
                       
-def eval():
-  test_dataset = LiarDataset("test", num_labels=num_labels)
-  test_ldr = DataLoader(test_dataset, batch_size=10)
-
-  print("Loading models...")
-  embedding_model = DistilBertForSequenceEmbedding()
-  embedding_model.load(os.path.join(saved_models_dir, "embedding_model.pt"))
-  prediction_model = SoftmaxHead(embedding_model.get_embedding_size(), test_dataset.get_num_classes())
-  prediction_model.load(os.path.join(saved_models_dir, "prediction_model.pt"))
-  print("Done!")
-
-  if torch.cuda.is_available():
-    print("GPU available!")
-    embedding_model.to('cuda')
-    prediction_model.to('cuda')
-  
-  logging.info("Staring evaluation...")
-  predictions = []
-  labels = []
-  with torch.no_grad():
-    for (batch_idx, batch) in tqdm(enumerate(test_ldr)):
-      embeddings = embedding_model(batch["data"]) 
-      y_pred = torch.argmax(prediction_model(embeddings), axis=-1)
-
-      if torch.cuda.is_available():
-        batch["label"] = batch["label"].to('cuda', dtype=torch.long)
-      y_label = batch["label"]
-
-      for pred in y_pred:
-        predictions.append(int(pred))
-      for label in y_label:
-        labels.append(int(label))
-  print(f"Test accuracy: {accuracy_score(labels, predictions)}")
-
 def eval_wrapper(args):
   test_dataset = LiarDataset("test", num_labels=num_labels)
   test_ldr = DataLoader(test_dataset, batch_size=10)
@@ -117,18 +83,47 @@ def eval_contrastive(embedding_model, index: faiss.IndexIDMap, prediction_model,
 
 if __name__=="__main__":
     parser = argparse.ArgumentParser(description='Evaluate a model.')
-    parser.add_argument('--contrastive', action='store_true')
     parser.add_argument('--model_path', type=str)
     parser.add_argument('--index_path', type=str)
     args = parser.parse_args()
 
     # TODO add model_path arg for eval()
-    if args.contrastive:
-      if not os.path.exists(args.model_path):
-          raise Exception("Need to specify a valid model path!")
+    if not os.path.exists(args.model_path):
+        raise Exception("Need to specify a valid model path!")
+
+    eval_wrapper(args)
 
 
-    if args.contrastive:
-      eval_wrapper(args)
-    else:
-      eval()
+# def eval():
+#   test_dataset = LiarDataset("test", num_labels=num_labels)
+#   test_ldr = DataLoader(test_dataset, batch_size=10)
+
+#   print("Loading models...")
+#   embedding_model = DistilBertForSequenceEmbedding()
+#   embedding_model.load(os.path.join(saved_models_dir, "embedding_model.pt"))
+#   prediction_model = SoftmaxHead(embedding_model.get_embedding_size(), test_dataset.get_num_classes())
+#   prediction_model.load(os.path.join(saved_models_dir, "prediction_model.pt"))
+#   print("Done!")
+
+#   if torch.cuda.is_available():
+#     print("GPU available!")
+#     embedding_model.to('cuda')
+#     prediction_model.to('cuda')
+  
+#   logging.info("Staring evaluation...")
+#   predictions = []
+#   labels = []
+#   with torch.no_grad():
+#     for (batch_idx, batch) in tqdm(enumerate(test_ldr)):
+#       embeddings = embedding_model(batch["data"]) 
+#       y_pred = torch.argmax(prediction_model(embeddings), axis=-1)
+
+#       if torch.cuda.is_available():
+#         batch["label"] = batch["label"].to('cuda', dtype=torch.long)
+#       y_label = batch["label"]
+
+#       for pred in y_pred:
+#         predictions.append(int(pred))
+#       for label in y_label:
+#         labels.append(int(label))
+#   print(f"Test accuracy: {accuracy_score(labels, predictions)}")
