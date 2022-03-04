@@ -83,7 +83,7 @@ class LiarDataset(Dataset):
         return inv_class_balance
 
     def get_id_map(self) -> Dict[int, Dict[str, Union[int, str]]]:
-        return {string_to_id(ex["id"]): {"label": ex["label"], "statement": ex["statement"]} for ex in self.dataset}
+        return {string_to_id(ex["id"]): {"label": convert_label(ex["label"], self.num_labels), "statement": ex["statement"]} for ex in self.dataset}
 
     ### THIS DOES NOT WORK RIGHT NOW ###
     def tokenize(self):
