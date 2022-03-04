@@ -1,0 +1,7 @@
+program: train.py
+method: grid
+parameters:
+  learning_rate:
+    values: [0.001, 0.0001, 0.00001]
+  embedding_size:
+    values: [64, 128, 256, 512]

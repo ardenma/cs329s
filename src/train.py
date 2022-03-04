@@ -57,7 +57,7 @@ def train():
   # For eval
   eval_model = MajorityVoter()
   id_map = train_dataset.get_id_map()
-  best_accuracy = 0
+  best_metric = 0
 
   if torch.cuda.is_available():
     print("GPU available!")
@@ -76,7 +76,7 @@ def train():
   logging.info(f"Using optimizer: {wandb.config.optimizer}.")
 
   logging.info("Starting training loop...")
-  for epoch in tqdm(range(wandb.config.epochs)):
+  for epoch in tqdm(range(1, wandb.config.epochs + 1)):
     for (batch_idx, batch) in tqdm(enumerate(train_ldr)):
       optimizer.zero_grad()
       
@@ -109,22 +109,23 @@ def train():
     # Evaluation
     if epoch % wandb.config.eval_frequency == 0:
       index = create_index(embedding_model, train_ldr)
-      test_accuracy = eval_contrastive(embedding_model, index, eval_model, wandb.config.K, id_map, dev_ldr)
-      if (test_accuracy > best_accuracy):
-        wandb.run.summary["best_accuracy"] = test_accuracy
+      test_metric = eval_contrastive(wandb.config.metric, embedding_model, index, eval_model, wandb.config.K, id_map, dev_ldr)
+      wandb.log({wandb.config.metric: test_metric, "epoch": epoch})
+      if (test_metric > best_metric):
+        wandb.run.summary[f"best_{wandb.config.metric}"] = test_metric
         wandb.run.summary["best_epoch"] = epoch
-        
-        best_accuracy = test_accuracy
-        embedding_model.save(f"{embedding_model_filename.split('.')[0]}_epoch_{epoch}_{test_accuracy:.3f}.pt")
+
+        best_metric = test_metric
+        embedding_model.save(f"{embedding_model_filename.split('.')[0]}_epoch_{epoch}_{test_metric:.3f}.pt")
         
         # Artifact tracking
         artifact = wandb.Artifact(f'{wandb.run.name}-{wandb.config.num_labels}-labels', type='distilbert-embedding-model')
-        artifact.add_file(f"{embedding_model_filename.split('.')[0]}_epoch_{epoch}_{test_accuracy:.3f}.pt", 
-                          name=f"{wandb.run.name}_epoch_{epoch}_{test_accuracy:.3f}.pt")
+        artifact.add_file(f"{embedding_model_filename.split('.')[0]}_epoch_{epoch}_{test_metric:.3f}.pt", 
+                          name=f"{wandb.run.name}_epoch_{epoch}_{test_metric:.3f}.pt")
         run.log_artifact(artifact)
 
         if wandb.config.loss_type != "contrastive":
-          prediction_model.save(f"{prediction_model_filename.split('.')[0]}_epoch_{epoch}_{test_accuracy:.3f}.pt")
+          prediction_model.save(f"{prediction_model_filename.split('.')[0]}_epoch_{epoch}_{test_metric:.3f}.pt")
     
   logging.info("Done.")
 

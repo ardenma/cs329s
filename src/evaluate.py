@@ -7,7 +7,7 @@ import torch
 import faiss
 from torch.utils.data import DataLoader
 from tqdm import tqdm
-from sklearn.metrics import accuracy_score
+from sklearn.metrics import accuracy_score, f1_score
 
 from models.distilbert import DistilBertForSequenceEmbedding
 from models.heads import SoftmaxHead
@@ -42,9 +42,9 @@ def eval_wrapper(args):
   
   K = 3
 
-  eval_contrastive(embedding_model, index, prediction_model, K, id_map, test_ldr)
+  eval_contrastive("f1_score", embedding_model, index, prediction_model, K, id_map, test_ldr)
   
-def eval_contrastive(embedding_model, index: faiss.IndexIDMap, prediction_model, K: int, id_map, dataloader: DataLoader):
+def eval_contrastive(metric: str, embedding_model, index: faiss.IndexIDMap, prediction_model, K: int, id_map, dataloader: DataLoader):
   if torch.cuda.is_available():
     print("GPU available!")
     embedding_model.to('cuda')
@@ -75,10 +75,16 @@ def eval_contrastive(embedding_model, index: faiss.IndexIDMap, prediction_model,
   for label, pred in zip(labels, predictions):
     print(f"model predicted {pred} with label {label}")
 
-  accuracy = accuracy_score(labels, predictions)
-  print(f"Eval accuracy: {accuracy}")
+  if metric == "accuracy":
+    result = accuracy_score(labels, predictions)
+    print(f"Eval accuracy: {result}")
+  elif metric == "f1_score":
+    result = f1_score(labels, predictions, average='weighted')
+    print(f"Eval weighted f1_score: {result}")
+  else:
+    raise Exception(f"Unsupported metric: '{metric}'")
 
-  return accuracy
+  return result
 
 
 if __name__=="__main__":
