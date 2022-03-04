@@ -19,9 +19,9 @@ from utils.index import create_index
 logging.getLogger().setLevel(logging.INFO)
 cwd = pathlib.Path(__file__).parent.resolve()
 
-wandb.init(
+run = wandb.init(
   project="cs329s", 
-  entity="ardenma", 
+  entity="cs329s", 
   config=os.path.join(cwd, "config", "config_default.yaml"),
   reinit=True,
   # mode="disabled"  # for debug
@@ -115,6 +115,13 @@ def train():
         wandb.run.summary["best_epoch"] = epoch
         best_accuracy = test_accuracy
         embedding_model.save(f"{embedding_model_filename.split('.')[0]}_epoch_{epoch}_{test_accuracy:.3f}.pt")
+        
+        # Artifact tracking
+        artifact = wandb.Artifact(f'{wandb.run.name}-{wandb.config.num_labels}-labels', type='distilbert-embedding-model')
+        artifact.add_file(f"{embedding_model_filename.split('.')[0]}_epoch_{epoch}_{test_accuracy:.3f}.pt", 
+                          name=f"{wandb.run.name}_epoch_{epoch}_{test_accuracy:.3f}.pt")
+        run.log_artifact(artifact)
+
         if wandb.config.loss_type != "contrastive":
           prediction_model.save(f"{prediction_model_filename.split('.')[0]}_epoch_{epoch}_{test_accuracy:.3f}.pt")
     
