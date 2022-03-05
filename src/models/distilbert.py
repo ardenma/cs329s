@@ -1,11 +1,8 @@
 import os
 import logging
-from turtle import forward
-from typing import Union, List, Callable
-
+from typing import List
 import torch
-from transformers import DistilBertTokenizer, DistilBertForSequenceClassification, BatchEncoding
-from src.models.heads import SoftmaxHead
+from transformers import DistilBertTokenizer, DistilBertForSequenceClassification
 
 class DistilBertForSequenceEmbedding(torch.nn.Module):
     def __init__(self, embedding_size: int=100):
@@ -32,7 +29,10 @@ class DistilBertForSequenceEmbedding(torch.nn.Module):
 
     def load(self, filepath: str):
         assert os.path.exists(filepath), f"{filepath} does not exist!"
-        save_dict = torch.load(filepath)
+        if not torch.cuda.is_available():
+            save_dict = torch.load(filepath, map_location=torch.device('cpu'))
+        else:
+            save_dict = torch.load(filepath)
         self.embedding_size = save_dict["embedding_size"]
         self.model = DistilBertForSequenceClassification.from_pretrained("distilbert-base-uncased", num_labels=self.embedding_size)
         self.load_state_dict(save_dict["state_dict"])

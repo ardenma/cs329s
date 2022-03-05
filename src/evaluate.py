@@ -5,16 +5,14 @@ import argparse
 
 import torch
 import faiss
-import wandb
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 from sklearn.metrics import accuracy_score, f1_score
 
 from models.distilbert import DistilBertForSequenceEmbedding
-from models.heads import SoftmaxHead
 from models.voting import WeightedMajorityVoter
 from utils.data import LiarDataset
-from utils.index import create_index
+from utils.index import cache_index
 from utils.artifacts import get_model_path_from_artifact
 logging.getLogger().setLevel(logging.INFO)
 
@@ -28,26 +26,13 @@ if not os.path.exists(index_dir): os.mkdir(index_dir)
 artifacts_dir = os.path.join(cwd, "artifacts")
 if not os.path.exists(artifacts_dir): os.mkdir(artifacts_dir)
 
-def cache_index(model_name: str, embedding_model):
-  train_dataset = LiarDataset("train", num_labels=num_labels)
-  train_ldr = DataLoader(train_dataset, batch_size=10)
-  index_path = os.path.join(index_dir, model_name + ".index")
-  if not os.path.exists(index_path):
-    index = create_index(embedding_model, train_ldr)
-    print(f"Saving index to: {index_path}")
-    faiss.write_index(index, index_path)
-  else:
-    print(f"Loading index at: {index_path}")
-    index = faiss.read_index(index_path)  
-  return index
-
 
 def eval_wrapper(args):
   test_dataset = LiarDataset("test", num_labels=num_labels)
   test_ldr = DataLoader(test_dataset, batch_size=10)
   id_map = LiarDataset("train", num_labels=num_labels).get_id_map()
 
-  print("Loading models...")
+  logging.info("Loading models...")
   embedding_model = DistilBertForSequenceEmbedding()
   if args.model_path:
     embedding_model.load(args.model_path)
@@ -55,25 +40,25 @@ def eval_wrapper(args):
       index = faiss.read_index(args.index_path)
     else:
       model_name = os.path.basename(args.model_path).split('.')[0]
-      index = cache_index(model_name, embedding_model)
+      index = cache_index(model_name, embedding_model, num_labels)
 
   elif args.artifact:  # e.g. daily-tree-15-3-labels:v4
     model_name = "_".join(args.artifact.split('_')[0:3])
     model_path = get_model_path_from_artifact(args.artifact)
     embedding_model.load(model_path)
-    index = cache_index(model_name, embedding_model)
+    index = cache_index(model_name, embedding_model, num_labels)
 
   prediction_model = WeightedMajorityVoter()
-  print("Done!")
+  logging.info("Done!")
   
   K = 3
 
-  print(f"Running evaluation with model: '{model_name}'...")
+  logging.info(f"Running evaluation with model: '{model_name}'...")
   eval_contrastive(embedding_model, index, prediction_model, K, id_map, test_ldr)
   
 def eval_contrastive( embedding_model, index: faiss.IndexIDMap, prediction_model, K: int, id_map, dataloader: DataLoader):
   if torch.cuda.is_available():
-    print("GPU available!")
+    logging.info("GPU available!")
     embedding_model.to('cuda')
   
   logging.info("Staring evaluation...")
@@ -99,12 +84,12 @@ def eval_contrastive( embedding_model, index: faiss.IndexIDMap, prediction_model
         labels.append(int(label))
     
   for label, pred in zip(labels, predictions):
-    print(f"model predicted {pred} with label {label}")
+    logging.info(f"model predicted {pred} with label {label}")
 
   metrics = {"accuracy": accuracy_score(labels, predictions), "f1_score": f1_score(labels, predictions, average='weighted')}
 
-  print(f"Eval accuracy: {metrics['accuracy']}")
-  print(f"Eval weighted f1_score: {metrics['f1_score']}")
+  logging.info(f"Eval accuracy: {metrics['accuracy']}")
+  logging.info(f"Eval weighted f1_score: {metrics['f1_score']}")
 
   return metrics
 
