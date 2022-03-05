@@ -2,7 +2,6 @@ import os
 import logging
 import pathlib
 import argparse
-import glob
 
 import torch
 import faiss
@@ -16,6 +15,7 @@ from models.heads import SoftmaxHead
 from models.voting import WeightedMajorityVoter
 from utils.data import LiarDataset
 from utils.index import create_index
+from utils.artifacts import get_model_path_from_artifact
 logging.getLogger().setLevel(logging.INFO)
 
 num_labels = 3
@@ -58,15 +58,8 @@ def eval_wrapper(args):
       index = cache_index(model_name, embedding_model)
 
   elif args.artifact:  # e.g. daily-tree-15-3-labels:v4
-    api = wandb.Api()
-    artifact = api.artifact(f'cs329s/cs329s/{args.artifact}', type='distilbert-embedding-model')
     model_name = "_".join(args.artifact.split('_')[0:3])
-    artifact_path = os.path.join(artifacts_dir, model_name)
-    if not os.path.exists(artifact_path):
-      artifact.download(artifact_path)
-    model_paths = glob.glob(os.path.join(artifact_path, "*.pt"))
-    assert len(model_paths) == 1, "artifact should have only one model checkpoint..."
-    model_path = model_paths[0]
+    model_path = get_model_path_from_artifact(args.artifact)
     embedding_model.load(model_path)
     index = cache_index(model_name, embedding_model)
 
