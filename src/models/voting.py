@@ -24,15 +24,15 @@ class MajorityVoter:
 
 class WeightedMajorityVoter:
 
-    def __call__(self, batch_votes: List[List[int]], batch_similarities: List[List[float]]) -> List[int]:
+    def __call__(self, batch_votes: List[List[int]], batch_similarities: np.array) -> List[int]:
         return [self.vote_func(votes, similarities) for votes, similarities in zip(batch_votes, batch_similarities)]
     
-    def vote_func(self, votes: List[int], similarities: List[float]) -> int:
+    def vote_func(self, votes: List[int], similarities: np.array) -> int:
         scores = {}
         for vote, similarity in zip(votes, similarities):
             if vote not in scores:
                 scores[vote] = similarity
             else:
-                scores[vote] += similarities
+                scores[vote] += similarity
         
         return max(scores, key=scores.get)
