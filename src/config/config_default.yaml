@@ -1,0 +1,34 @@
+# sample config defaults file
+epochs:
+  desc: Number of epochs to train over
+  value: 20
+eval_frequency:
+  desc: How often to perform evaluation (in epochs)
+  value: 2
+batch_size:
+  desc: Size of each mini-batch
+  value: 10
+optimizer:
+  desc: Optimizer name (Adam or AdamW)
+  value: AdamW
+learning_rate:
+  desc: Learning rate for optimizer
+  value: 0.0001
+embedding_size: 
+  desc: Size of embeddings to use
+  value: 128
+same_label_multiplier: 
+  desc:  Multiplier for same label embedding pairs in contrastive loss
+  value: 2
+num_labels:
+  desc: Number of labels (2, 3, or 6)
+  value: 3
+K:
+  desc: number of embeddings to use in KNN majority voting
+  value: 3
+loss_type:
+  desc: type of loss to use (contrastive, normal, hybrid)
+  value: hybrid
+save_metric:
+  desc: which metric to save based on (accuracy, f1_score)
+  value: f1_score
