@@ -58,8 +58,6 @@ def main(args):
         print(D)
         print(IDs)
 
-            
-
 if __name__=="__main__":
     parser = argparse.ArgumentParser(description='Evaluate a model.')
     parser.add_argument('--contrastive', action='store_true')
