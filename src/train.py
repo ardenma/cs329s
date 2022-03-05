@@ -115,13 +115,6 @@ def train():
       validation_metrics["epoch"] = epoch
       wandb.log(validation_metrics)
 
-      # Update best metrics
-      for metric in best_metrics.keys():
-        if (validation_metrics[metric] > best_metrics[metric]):
-          best_metrics[metric] = validation_metrics[metric]
-          wandb.run.summary[f"best_{metric}"] = validation_metrics[metric]
-          wandb.run.summary[f"best_{metric}_epoch"] = epoch
-
       # Save file if we have a new best save metric
       save_metric = validation_metrics[wandb.config.save_metric]
       if (save_metric > best_metrics[wandb.config.save_metric]):
@@ -138,6 +131,13 @@ def train():
 
         if wandb.config.loss_type != "contrastive":
           prediction_model.save(f"{prediction_model_filename.split('.')[0]}_epoch_{epoch}_{save_metric:.3f}.pt")
+      
+      # Update best metrics
+      for metric in best_metrics.keys():
+        if (validation_metrics[metric] > best_metrics[metric]):
+          best_metrics[metric] = validation_metrics[metric]
+          wandb.run.summary[f"best_{metric}"] = validation_metrics[metric]
+          wandb.run.summary[f"best_{metric}_epoch"] = epoch
     
   logging.info("Done.")
 
