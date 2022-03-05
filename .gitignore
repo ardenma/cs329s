@@ -1,6 +1,7 @@
 env/
 myproject.egg-info/
 src/saved_models/
+src/artifacts/
 src/indexes/
 **/wandb/
 **/__pycache__/
