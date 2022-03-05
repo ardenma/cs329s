@@ -10,7 +10,7 @@ from tqdm import tqdm
 from evaluate import eval_contrastive
 from models.distilbert import DistilBertForSequenceEmbedding
 from models.heads import SoftmaxHead
-from models.voting import MajorityVoter
+from models.voting import WeightedMajorityVoter
 from utils.data import LiarDataset
 from utils.loss import contrastive_loss
 from utils.optim import get_optimizer
@@ -55,7 +55,7 @@ def train():
     criterion = torch.nn.CrossEntropyLoss(weight=class_weight, reduction='mean')
 
   # For eval
-  eval_model = MajorityVoter()
+  eval_model = WeightedMajorityVoter()
   id_map = train_dataset.get_id_map()
   best_metrics = {"accuracy": 0, "f1_score": 0}
 
@@ -141,12 +141,12 @@ def train():
     
   logging.info("Done.")
 
-  # Saving model
-  print("Saving models...")
-  embedding_model.save(embedding_model_filename)
-  if wandb.config.loss_type != "contrastive":
-    prediction_model.save(prediction_model_filename)
-  print("Done!")
+  # # Saving model
+  # print("Saving models...")
+  # embedding_model.save(embedding_model_filename)
+  # if wandb.config.loss_type != "contrastive":
+  #   prediction_model.save(prediction_model_filename)
+  # print("Done!")
 
 if __name__=="__main__":
     wandb.require(experiment="service")

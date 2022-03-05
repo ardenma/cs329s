@@ -56,7 +56,7 @@ def eval_wrapper(args):
   logging.info(f"Running evaluation with model: '{model_name}'...")
   eval_contrastive(embedding_model, index, prediction_model, K, id_map, test_ldr)
   
-def eval_contrastive( embedding_model, index: faiss.IndexIDMap, prediction_model, K: int, id_map, dataloader: DataLoader):
+def eval_contrastive(embedding_model: DistilBertForSequenceEmbedding, index: faiss.IndexIDMap, prediction_model: WeightedMajorityVoter, K: int, id_map, dataloader: DataLoader):
   if torch.cuda.is_available():
     logging.info("GPU available!")
     embedding_model.to('cuda')
