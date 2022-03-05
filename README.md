@@ -15,6 +15,7 @@
     - to run a sweep, simply configure `config/sweep.py`, go to the `src` directory, run `wandb sweep config/sweep.py` and then copy and paste the command that is outputted to launch the wandb agent (prepend the agent launch command with `nohup` if the process is dying after a while).
 2. run `python evaluate.py` to evaluate the saved models
     - run `python evaluate.py --model_path PATH_TO_MODEL` to evaluate using the embedding model and the FAISS index + majority voter as the prediction model
+    - run `python evaluate.py --artifact ARTIFACT_NAME` to run evaluation using a wandb artifact (e.g. `daily-tree-15-3-labels:v4`)
 
 ## Running the Application
 1. use `ray start --head` to start the ray cluster
