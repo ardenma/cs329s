@@ -1,15 +1,15 @@
 import os
 import pathlib
 import logging
+from typing import Union
 
 import torch
 import faiss
-from joblib import Parallel, delayed
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
-from models.distilbert import DistilBertForSequenceEmbedding
-from utils.data import LiarDataset
+from src.models.distilbert import DistilBertForSequenceEmbedding
+from src.utils.data import LiarDataset
 
 def create_index(embedding_model: DistilBertForSequenceEmbedding, num_labels: int) -> faiss.IndexIDMap:
     # Setup training dataloader for the index creation
@@ -44,7 +44,20 @@ def create_index(embedding_model: DistilBertForSequenceEmbedding, num_labels: in
 
     return index
 
-def cache_index(model_name: str, embedding_model: DistilBertForSequenceEmbedding, num_labels: int):
+def load_index(model_name: str) -> Union[None, faiss.IndexIDMap]:
+    # Setup directories and pathnames
+    index_dir = os.path.join(pathlib.Path(__file__).parent.parent.resolve(), "indexes")
+    if not os.path.exists(index_dir): os.mkdir(index_dir)
+    index_path = os.path.join(index_dir, model_name + ".index")
+    index = None
+
+    if os.path.exists:
+        logging.info(f"Loading index at: {index_path}")
+        index = faiss.read_index(index_path)  
+
+    return index
+
+def cache_index(model_name: str, embedding_model: DistilBertForSequenceEmbedding, num_labels: int) -> faiss.IndexIDMap:
     # Setup directories and pathnames
     index_dir = os.path.join(pathlib.Path(__file__).parent.parent.resolve(), "indexes")
     if not os.path.exists(index_dir): os.mkdir(index_dir)

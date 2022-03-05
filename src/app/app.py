@@ -13,9 +13,9 @@ app = FastAPI()
 @serve.deployment(route_prefix="/app")
 @serve.ingress(app)
 class MisinformationDetectionApp:
-    def __init__(self):
+    def __init__(self, artifact_name: str="daily-tree-15-3-labels:v5"):
         logging.basicConfig(level=logging.INFO)
-        MisinformationDetectionModel.deploy()
+        MisinformationDetectionModel.deploy(artifact_name=artifact_name)
         self.model = MisinformationDetectionModel.get_handle(sync=True)  # TODO figure out why sync=False fails
 
     @app.post("/predict", response_model=Response)
