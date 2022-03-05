@@ -11,13 +11,12 @@ from sklearn.metrics import accuracy_score, f1_score
 
 from models.distilbert import DistilBertForSequenceEmbedding
 from models.heads import SoftmaxHead
-from models.voting import MajorityVoter
+from models.voting import WeightedMajorityVoter
 from utils.data import LiarDataset
 from utils.index import create_index
 logging.getLogger().setLevel(logging.INFO)
 
 num_labels = 3
-
 
 cwd = pathlib.Path(__file__).parent.resolve()
 saved_models_dir = os.path.join(cwd, "saved_models")
@@ -36,8 +35,17 @@ def eval_wrapper(args):
   else:
     train_dataset = LiarDataset("train", num_labels=num_labels)
     train_ldr = DataLoader(train_dataset, batch_size=10)
-    index = create_index(embedding_model, train_ldr)
-  prediction_model = MajorityVoter()
+    model_name = os.path.basename(args.model_path).split('.')[0]
+    index_path = os.path.join(index_dir, model_name + ".index")
+    if not os.path.exists(index_path):
+      index = create_index(embedding_model, train_ldr)
+      print(f"Saving index to: {index_path}")
+      faiss.write_index(index, index_path)
+    else:
+      print(f"Loading index at: {index_path}")
+      index = faiss.read_index(index_path)
+
+  prediction_model = WeightedMajorityVoter()
   print("Done!")
   
   K = 3
@@ -58,11 +66,11 @@ def eval_contrastive( embedding_model, index: faiss.IndexIDMap, prediction_model
       embeddings = embedding_model(batch["data"]) 
 
       # Cosine similarity search using normalized embeddings
-      D, IDs = index.search(embeddings.cpu().numpy(), K)
+      S, IDs = index.search(embeddings.cpu().numpy(), K)
 
       # Vote based on label of top 5 nearest examples
       votes = [[id_map[ID]["label"] for ID in K_ids] for K_ids in IDs]
-      y_pred = prediction_model(votes)
+      y_pred = prediction_model(votes, S)
       y_label = batch["label"]
 
       # Update list of predictions and labels
@@ -88,43 +96,7 @@ if __name__=="__main__":
     parser.add_argument('--index_path', type=str)
     args = parser.parse_args()
 
-    # TODO add model_path arg for eval()
     if not os.path.exists(args.model_path):
         raise Exception("Need to specify a valid model path!")
 
     eval_wrapper(args)
-
-
-# def eval():
-#   test_dataset = LiarDataset("test", num_labels=num_labels)
-#   test_ldr = DataLoader(test_dataset, batch_size=10)
-
-#   print("Loading models...")
-#   embedding_model = DistilBertForSequenceEmbedding()
-#   embedding_model.load(os.path.join(saved_models_dir, "embedding_model.pt"))
-#   prediction_model = SoftmaxHead(embedding_model.get_embedding_size(), test_dataset.get_num_classes())
-#   prediction_model.load(os.path.join(saved_models_dir, "prediction_model.pt"))
-#   print("Done!")
-
-#   if torch.cuda.is_available():
-#     print("GPU available!")
-#     embedding_model.to('cuda')
-#     prediction_model.to('cuda')
-  
-#   logging.info("Staring evaluation...")
-#   predictions = []
-#   labels = []
-#   with torch.no_grad():
-#     for (batch_idx, batch) in tqdm(enumerate(test_ldr)):
-#       embeddings = embedding_model(batch["data"]) 
-#       y_pred = torch.argmax(prediction_model(embeddings), axis=-1)
-
-#       if torch.cuda.is_available():
-#         batch["label"] = batch["label"].to('cuda', dtype=torch.long)
-#       y_label = batch["label"]
-
-#       for pred in y_pred:
-#         predictions.append(int(pred))
-#       for label in y_label:
-#         labels.append(int(label))
-#   print(f"Test accuracy: {accuracy_score(labels, predictions)}")
