@@ -56,7 +56,6 @@ def eval_contrastive( embedding_model, index: faiss.IndexIDMap, prediction_model
     for (batch_idx, batch) in tqdm(enumerate(dataloader)):
       # Generate embeddings
       embeddings = embedding_model(batch["data"]) 
-      embeddings = torch.nn.functional.normalize(embeddings, p=2.0, dim=-1, eps=1e-12)
 
       # Cosine similarity search using normalized embeddings
       D, IDs = index.search(embeddings.cpu().numpy(), K)

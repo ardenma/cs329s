@@ -18,7 +18,8 @@ class DistilBertForSequenceEmbedding(torch.nn.Module):
         encoded_input = self.tokenizer(x, padding="max_length", truncation=True, return_tensors='pt')
         encoded_input = {key: val.to('cuda') if next(self.model.parameters()).is_cuda else val for key, val in encoded_input.items()}
         output = self.model(**encoded_input).logits
-        return output
+        normalized_output = torch.nn.functional.normalize(output, p=2.0, dim=-1, eps=1e-12)
+        return normalized_output
 
     def get_embedding_size(self) -> int:
         assert self.embedding_size != -1, "Need to fit() or load() model before retrieving embedding size."
