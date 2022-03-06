@@ -1,3 +1,4 @@
+from typing import List
 from pydantic import BaseModel
 
 class Query(BaseModel):
@@ -6,4 +7,15 @@ class Query(BaseModel):
 
 class Response(BaseModel):
     id: int
-    prediction: float
+    prediction: int
+    predicted_class: str
+    most_similar_examples: List[str]
+    example_classes: List[str]
+    example_similarities: List[float]
+
+class PredictionResult(BaseModel):
+    prediction: int
+    statements: List[str]
+    statement_ids: List[int]
+    statement_labels: List[int]
+    statement_similarities: List[float]

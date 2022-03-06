@@ -22,4 +22,7 @@ def parse_results(results: List[requests.Response]):
 
 # Let's use Ray to send all queries in parallel
 results = ray.get([send_query.remote(i) for i in range(100)])
-print("Result returned:", parse_results(results))
+results = parse_results(results)
+print("Result returned:")
+for result in results:
+    print(result)

@@ -16,7 +16,7 @@ CONVERSION = {0:5, 1:0, 2:4, 3:1, 4:2, 5:3}
 
 ACCEPTABLE_NUM_LABELS = [2, 3, 6]
 
-def convert_label(label: int, num_labels: int):
+def convert_label(label: int, num_labels: int) -> int:
     label = CONVERSION[label]
     if num_labels == 2:
         label = 1.0 if label > 1 else 0.0
@@ -28,6 +28,16 @@ def convert_label(label: int, num_labels: int):
 
 def string_to_id(string: str) -> int:
     return int(string.split('.')[0])
+
+def get_label_to_classname_map(num_labels: int) -> Dict[int, str]:
+    if num_labels == 2:
+        return {0: "false", 1:"true"}
+    elif num_labels == 3:
+        return {0: "false", 1: "unsure", 2: "true"}
+    elif num_labels == 6:
+        return LABELS
+    else:
+        raise Exception("Need to choose 2, 3, or 6 labels")
 class LiarDataset(Dataset):
     def __init__(self, split: str="train", num_labels: int=3):
         super(LiarDataset, self).__init__()

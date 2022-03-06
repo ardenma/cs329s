@@ -35,10 +35,13 @@ samples = [dataset[int(rand_idx)] for rand_idx in np.random.randint(0, len(datas
 # Let's use Ray to send all queries in parallel
 results = ray.get([send_query.remote(i, sample["data"]) for i, sample in enumerate(samples)])
 results = parse_results(results)
-print("Result returned:", results)
+
+print("Result returned:")
+for result in results:
+    print(result)
 
 for i, sample in enumerate(samples):
     prediction = find_response(results, i)['prediction']
     label = int(sample['label'])
     result = "CORRECT!" if round(prediction) == label else "WRONG!"
-    print(f"Query {i}, prediction: {prediction} -> {round(prediction)} true label: {label}, {result}")
+    print(f"Query {i}, prediction: {prediction}, true label: {label}, {result}")

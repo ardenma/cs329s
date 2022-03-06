@@ -4,6 +4,7 @@ from typing import List
 
 import torch
 import faiss
+import numpy as np
 from ray import serve
 
 from src.models.distilbert import DistilBertForSequenceEmbedding
@@ -11,6 +12,7 @@ from src.models.voting import WeightedMajorityVoter
 from src.utils.data import LiarDataset
 from src.utils.artifacts import download_model_artifact, download_index_artifact
 from src.utils.index import cache_index, load_index
+from src.utils.datatypes import PredictionResult
 
 BASEDIR = pathlib.Path(__file__).parent.parent.absolute()
 @serve.deployment
@@ -62,22 +64,38 @@ class prediction_model:
 
     # Takes as input a list of embeddings and returns a same size list of int label predictions
     @serve.batch(batch_wait_timeout_s=0.1)
-    async def batch_handler(self, embeddings: List[torch.tensor]) -> List[int]:
+    async def batch_handler(self, embeddings: List[torch.tensor]) -> List[PredictionResult]:
         # Batch together embeddings
         batched_embeddings = torch.vstack(embeddings)
 
         # Compute similarities with IP index searech
-        S, IDs = self.index.search(batched_embeddings.cpu().numpy(), self.K)
+        batched_similarities, batched_ids = self.index.search(batched_embeddings.cpu().numpy(), self.K)
 
         # Vote on prediction
-        votes = [[self.id_map[ID]["label"] for ID in K_ids] for K_ids in IDs]
-        batched_predictions = self.voter(votes, S)
+        votes = [list(map(self.get_label_from_id, ids)) for ids in batched_ids]
+        batched_predictions = self.voter(votes, batched_similarities)
 
         logging.info(f"Prediction model called with batch of {len(embeddings)}")
         logging.debug(f"Prediction model called with batch of {len(embeddings)} embeddings: {embeddings}, generated corresponding prediction: {batched_predictions}")
-        return batched_predictions
 
-    async def __call__(self, embedding: torch.tensor) -> List[float]:
+        batched_results = [
+            PredictionResult(
+                prediction=pred, 
+                statements=list(map(self.get_statement_from_id, ids)), 
+                statement_ids=list(ids), 
+                statement_labels=list(map(self.get_label_from_id, ids)),
+                statement_similarities=list(similarities)
+            ) for pred, ids, similarities in zip(batched_predictions, batched_ids, batched_similarities)]
+
+        return batched_results
+    
+    def get_statement_from_id(self, i: int):
+        return self.id_map[i]["statement"]
+
+    def get_label_from_id(self, i: int):
+        return self.id_map[i]["label"]
+
+    async def __call__(self, embedding: torch.tensor) -> List[int]:
         return await self.batch_handler(embedding)
 
 # max_concurrent_queries is optional. By default, if you pass in an async
@@ -94,7 +112,7 @@ class MisinformationDetectionModel:
         self.prediction_model = prediction_model.get_handle(sync=False)
     
     # This method can be called concurrently!
-    async def __call__(self, input: str) -> float:
+    async def __call__(self, input: str) -> PredictionResult:
         embedding = await self.embedding_model.remote(input=input)
-        prediction = await self.prediction_model.remote(embedding=embedding)
-        return prediction
+        result = await self.prediction_model.remote(embedding=embedding)
+        return result
