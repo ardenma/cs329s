@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<title>Misinformation Detection App</title>
+
+	<link rel='stylesheet' href='bootstrap.min.css'></style>
+	<link rel='stylesheet' href='font-awesome.min.css'></style>
+
+	<style>
+		p {
+			color: #111;
+			font-family: 'Helvetica Neue', sans-serif;
+			font-size: 14px;
+			line-height: 24px;
+			margin: 0 0 24px;
+			text-justify: inter-word;
+			text-align: center;
+		}
+
+		h1 {
+			color: #111;
+			font-family: 'Helvetica Neue', sans-serif;
+			font-size: 36px;
+			font-weight: bold;
+			letter-spacing: -1px;
+			line-height: 1;
+			text-align: center;
+		}
+
+		input[type=submit] {
+		  background-color: #f06237; /* Green */
+		  border: none;
+		  color: white;
+		  padding: 15px 32px;
+		  text-align: center;
+		  text-decoration: none;
+		  display: inline-block;
+		  font-size: 0.95em;
+		}
+
+		input[type=submit]:hover {
+		  background-color: #b0540e;
+		}
+
+		#demo {
+		  color: #111;
+			font-family: 'Helvetica Neue', sans-serif;
+			font-size: 22px;
+			line-height: 24px;
+			margin: 0 0 24px;
+			text-justify: inter-word;
+			text-align: center;
+		}
+	</style>
+</head>
+
+<body>
+	<div class="centered">
+		<h1 class="header">Misinformation Detection App</h1>
+		<p class="description">Type a statement in the text box, click submit, and wait for your prediction!</p>
+		<form method="POST" onSubmit="return validate();" class="form">
+			<input name="text">
+			<input type="submit" onclick="this.form.submit();">
+		</form>
+		<br>
+		<br>
+		<p id="demo">{{prediction}}</p>
+	</div>
+</body>
+
+</html>

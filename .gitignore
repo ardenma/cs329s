@@ -1,9 +1,4 @@
 env/
-myproject.egg-info/
-src/saved_models/
-src/artifacts/
-src/indexes/
-**/wandb/
-**/__pycache__/
-**/.DS_Store
-*.out
+saved_models/
+__pycache__/
+.DS_Store
