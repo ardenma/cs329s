@@ -6,7 +6,7 @@
     - you may need to `pip install -U pip` to upgrade the pip version, as well as `pip install wheel`
     - might need to `sudo apt install libomp5 libomp-dev` on linux or `brew install libomp` on mac for faiss 
 3. install the project as a package (for imports to work) with `pip install -e .`
-4. setup wandb account and get API key (https://wandb.ai/)
+4. setup wandb account and get API key (https://wandb.ai/), login using the command`wandb login`
 
 ## Training Models
 1. Run `python src/train.py` which should create two models `embedding_mode.pt` and `prediction_model.pt` in the `saved_models` directory
@@ -26,7 +26,7 @@
 ## Testing
 1. use `ray start --head` to start the ray cluster
 2. try some tests.
-    - e.g. `python src/tests/simple_http_request.py` launches the application and tries to make 5 POST requests to the application and prints the response.
+    - e.g. `python src/tests/test.py --test_name throughput -n 100` launches the application and tries to make 100 POST requests to the application and measures the throughput.
 3. use `ray stop` to kill the ray cluster
 
 ## TODO

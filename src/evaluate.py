@@ -2,6 +2,7 @@ import os
 import logging
 import pathlib
 import argparse
+from pathlib import Path
 
 import torch
 import faiss
@@ -13,7 +14,7 @@ from models.distilbert import DistilBertForSequenceEmbedding
 from models.voting import WeightedMajorityVoter
 from utils.data import LiarDataset
 from utils.index import cache_index
-from utils.artifacts import get_model_path_from_artifact
+from utils.artifacts import download_artifact, download_model_artifact
 logging.getLogger().setLevel(logging.INFO)
 
 num_labels = 3
@@ -39,14 +40,15 @@ def eval_wrapper(args):
     if args.index_path:
       index = faiss.read_index(args.index_path)
     else:
-      model_name = os.path.basename(args.model_path).split('.')[0]
+      model_name = Path(os.path.basename(args.model_path)).stem
       index = cache_index(model_name, embedding_model, num_labels)
 
   elif args.artifact:  # e.g. daily-tree-15-3-labels:v4
-    model_name = "_".join(args.artifact.split('_')[0:3])
-    model_path = get_model_path_from_artifact(args.artifact)
+    model_name = args.artifact
+    model_path = download_model_artifact(args.artifact)
     embedding_model.load(model_path)
-    index = cache_index(model_name, embedding_model, num_labels)
+    index_path = download_artifact(args.artifact)
+    index = faiss.read_index(index_path)
 
   prediction_model = WeightedMajorityVoter()
   logging.info("Done!")

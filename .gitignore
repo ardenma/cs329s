@@ -1,6 +1,7 @@
 env/
 myproject.egg-info/
 src/saved_models/
+src/saved_models_personal/
 src/artifacts/
 src/indexes/
 **/wandb/

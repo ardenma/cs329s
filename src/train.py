@@ -4,6 +4,7 @@ import pathlib
 
 import torch
 import wandb
+import faiss
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
@@ -35,11 +36,14 @@ saved_models_dir = os.path.join(cwd, "saved_models")
 if not os.path.exists(saved_models_dir): os.mkdir(saved_models_dir)
 experiment_dir = os.path.join(saved_models_dir, f"{wandb.run.name}")
 if not os.path.exists(experiment_dir): os.mkdir(experiment_dir)
+index_dir = os.path.join(cwd, "indexes")
+if not os.path.exists(index_dir): os.mkdir(index_dir)
 
 def train():
   # Generate filename
-  embedding_model_filename = os.path.join(experiment_dir, f"{wandb.run.name}_embedding_model.pt")
-  prediction_model_filename = os.path.join(experiment_dir, f"{wandb.run.name}_prediction_model.pt")
+  embedding_model_filename = os.path.join(experiment_dir, f"{wandb.run.name}_embedding_model")
+  prediction_model_filename = os.path.join(experiment_dir, f"{wandb.run.name}_prediction_model")
+  index_filename = os.path.join(index_dir, f"{wandb.run.name}_embedding_model.pt")
 
   # Get Dataset
   train_dataset = LiarDataset("train", num_labels=wandb.config.num_labels)
@@ -121,16 +125,22 @@ def train():
 
         # Save model
         model_suffix = f"_epoch_{epoch}_{wandb.config.save_metric}_{save_metric:.3f}.pt"
-        model_save_path = embedding_model_filename.split('.')[0] + model_suffix
+        model_save_path = embedding_model_filename + model_suffix
         embedding_model.save(model_save_path)
+
+        # Save index
+        index_suffix = f"_epoch_{epoch}_{wandb.config.save_metric}_{save_metric:.3f}.index"
+        index_save_path =  index_filename + index_suffix
+        faiss.write_index(index, index_save_path)
         
         # Artifact tracking
         artifact = wandb.Artifact(f'{wandb.run.name}-{wandb.config.num_labels}-labels', type='distilbert-embedding-model')
         artifact.add_file(model_save_path, name=f"{wandb.run.name}{model_suffix}")
+        artifact.add_file(index_save_path, name=f"{wandb.run.name}{index_suffix}")
         run.log_artifact(artifact)
 
         if wandb.config.loss_type != "contrastive":
-          prediction_model.save(f"{prediction_model_filename.split('.')[0]}_epoch_{epoch}_{save_metric:.3f}.pt")
+          prediction_model.save(f"{prediction_model_filename}_epoch_{epoch}_{save_metric:.3f}.pt")
       
       # Update best metrics
       for metric in best_metrics.keys():
