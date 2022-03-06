@@ -19,7 +19,7 @@ class MisinformationDetectionApp:
         logging.basicConfig(level=logging.INFO)
         self.num_labels = int(config.artifact_name.split('-')[3])
         self.label_to_classname = get_label_to_classname_map(self.num_labels)
-        MisinformationDetectionModel.deploy(artifact_name=config.artifact_name)
+        MisinformationDetectionModel.deploy(config=config)
         self.model = MisinformationDetectionModel.get_handle(sync=True)  # TODO figure out why sync=False fails
 
     @app.post("/predict", response_model=Response)

@@ -6,7 +6,9 @@ from src.utils.datatypes import AppConfig
 
 def serve_app(detached: bool=False):
     config = AppConfig(
-        artifact_name="daily-tree-15-3-labels:v5"
+        artifact_name="daily-tree-15-3-labels:v5",
+        num_embedding_model_replicas=2,
+        num_prediction_model_replicas=2
     )
 
     ray.init(address="auto", namespace="serve")            # Connects to the local ray cluster

@@ -22,3 +22,5 @@ class PredictionResult(BaseModel):
 
 class AppConfig(BaseModel):
     artifact_name: str
+    num_embedding_model_replicas: int
+    num_prediction_model_replicas: int

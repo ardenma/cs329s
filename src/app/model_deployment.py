@@ -12,16 +12,10 @@ from src.models.voting import WeightedMajorityVoter
 from src.utils.data import LiarDataset
 from src.utils.artifacts import download_model_artifact, download_index_artifact
 from src.utils.index import cache_index, load_index
-from src.utils.datatypes import PredictionResult
+from src.utils.datatypes import PredictionResult, AppConfig
 
 BASEDIR = pathlib.Path(__file__).parent.parent.absolute()
-@serve.deployment(
-     _autoscaling_config={
-        "min_replicas": 1,
-        "max_replicas": 10,
-        "target_num_ongoing_requests_per_replica": 10,
-    },
-    version="v1")
+@serve.deployment
 class embedding_model:
     def __init__(self, artifact_name: str=None):
         logging.basicConfig(level=logging.INFO)
@@ -47,14 +41,7 @@ class embedding_model:
     async def __call__(self, input: str) -> torch.tensor:
         return await self.batch_handler(input)
 
-
-@serve.deployment(
-     _autoscaling_config={
-        "min_replicas": 1,
-        "max_replicas": 10,
-        "target_num_ongoing_requests_per_replica": 10,
-    },
-    version="v1")
+@serve.deployment
 class prediction_model:
     def __init__(self, artifact_name: str=None, K: int=3):
         logging.basicConfig(level=logging.INFO)
@@ -112,13 +99,13 @@ class prediction_model:
 
 # max_concurrent_queries is optional. By default, if you pass in an async
 # function, Ray Serve sets the limit to a high number.
-@serve.deployment(max_concurrent_queries=10)
+@serve.deployment(max_concurrent_queries=100)
 class MisinformationDetectionModel:
-    def __init__(self, artifact_name: str=None):
+    def __init__(self, config: AppConfig):
         logging.basicConfig(level=logging.INFO)
 
-        embedding_model.deploy(artifact_name=artifact_name)
-        prediction_model.deploy(artifact_name=artifact_name)
+        embedding_model.options(num_replicas=config.num_embedding_model_replicas).deploy(artifact_name=config.artifact_name)
+        prediction_model.options(num_replicas=config.num_prediction_model_replicas).deploy(artifact_name=config.artifact_name)
         
         self.embedding_model = embedding_model.get_handle(sync=False)
         self.prediction_model = prediction_model.get_handle(sync=False)
