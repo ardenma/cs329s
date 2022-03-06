@@ -4,12 +4,11 @@ from typing import List
 import ray
 from ray import serve
 
-from src.app.app import MisinformationDetectionApp
+from src.serve import serve_app
 from src.utils.datatypes import Query
 
-ray.init(address="auto", namespace="serve")  # Connects to the local ray cluster
-serve.start(detached=False)                  # Initialize a ray serve instance
-MisinformationDetectionApp.deploy()          # Deploys our application
+# Start serving the app
+serve_app(detached=False)
 
 @ray.remote
 def send_query(number: int) -> requests.Response:

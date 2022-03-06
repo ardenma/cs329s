@@ -19,3 +19,6 @@ class PredictionResult(BaseModel):
     statement_ids: List[int]
     statement_labels: List[int]
     statement_similarities: List[float]
+
+class AppConfig(BaseModel):
+    artifact_name: str

@@ -15,7 +15,13 @@ from src.utils.index import cache_index, load_index
 from src.utils.datatypes import PredictionResult
 
 BASEDIR = pathlib.Path(__file__).parent.parent.absolute()
-@serve.deployment
+@serve.deployment(
+     _autoscaling_config={
+        "min_replicas": 1,
+        "max_replicas": 10,
+        "target_num_ongoing_requests_per_replica": 10,
+    },
+    version="v1")
 class embedding_model:
     def __init__(self, artifact_name: str=None):
         logging.basicConfig(level=logging.INFO)
@@ -42,7 +48,13 @@ class embedding_model:
         return await self.batch_handler(input)
 
 
-@serve.deployment
+@serve.deployment(
+     _autoscaling_config={
+        "min_replicas": 1,
+        "max_replicas": 10,
+        "target_num_ongoing_requests_per_replica": 10,
+    },
+    version="v1")
 class prediction_model:
     def __init__(self, artifact_name: str=None, K: int=3):
         logging.basicConfig(level=logging.INFO)

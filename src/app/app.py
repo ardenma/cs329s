@@ -1,12 +1,13 @@
 import logging
 from time import perf_counter
+from typing import Dict, Any
 
 import ray
 from fastapi import FastAPI
 from ray import serve
 
 from src.app.model_deployment import MisinformationDetectionModel
-from src.utils.datatypes import Query, Response
+from src.utils.datatypes import Query, Response, AppConfig
 from src.utils.data import get_label_to_classname_map
 
 app = FastAPI()
@@ -14,11 +15,11 @@ app = FastAPI()
 @serve.deployment(route_prefix="/app")
 @serve.ingress(app)
 class MisinformationDetectionApp:
-    def __init__(self, artifact_name: str="daily-tree-15-3-labels:v5"):
+    def __init__(self, config: AppConfig):
         logging.basicConfig(level=logging.INFO)
-        self.num_labels = int(artifact_name.split('-')[3])
+        self.num_labels = int(config.artifact_name.split('-')[3])
         self.label_to_classname = get_label_to_classname_map(self.num_labels)
-        MisinformationDetectionModel.deploy(artifact_name=artifact_name)
+        MisinformationDetectionModel.deploy(artifact_name=config.artifact_name)
         self.model = MisinformationDetectionModel.get_handle(sync=True)  # TODO figure out why sync=False fails
 
     @app.post("/predict", response_model=Response)
