@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Dict, Any
 from pydantic import BaseModel
 
 class Query(BaseModel):
@@ -12,6 +12,7 @@ class Response(BaseModel):
     most_similar_examples: List[str]
     example_classes: List[str]
     example_similarities: List[float]
+    diagnostics: Dict[str, Any]
 
 class PredictionResult(BaseModel):
     prediction: int

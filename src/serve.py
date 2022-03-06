@@ -21,5 +21,8 @@ def serve_app(config: AppConfig=None, detached: bool=False):
     serve.start(detached=detached)                         # Initialize a ray serve instance
     MisinformationDetectionApp.deploy(config=config)       # Deploys our application
 
+def redeploy_app(config: AppConfig):
+    MisinformationDetectionApp.deploy(config=config)
+
 if __name__=="__main__":
     serve_app(DEFAULT_CONFIG, True)

@@ -27,15 +27,18 @@ class MisinformationDetectionApp:
         time_start = perf_counter()
         result = await self.model.remote(query.data)
         result = ray.get(result)  # materialize prediction
+        time_end = perf_counter()
+        server_side_latency_ms = (time_end - time_start) * 1000
+        diagnostics = {"server_side_latency_ms": server_side_latency_ms}
         response = Response(
                     id=query.id, 
                     prediction=result.prediction, 
                     predicted_class=self.label_to_classname[result.prediction], 
                     most_similar_examples=result.statements,
                     example_classes=[self.label_to_classname[label] for label in result.statement_labels],
-                    example_similarities=result.statement_similarities
+                    example_similarities=result.statement_similarities,
+                    diagnostics=diagnostics
                     )
-        time_end = perf_counter()
         logging.info(f"Returned response for query {query.id}, latency: {(time_end - time_start) * 1000:.3f} ms")
         return response
 

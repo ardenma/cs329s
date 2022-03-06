@@ -2,8 +2,10 @@ import requests
 from time import perf_counter
 from typing import List, Dict, Any, Union
 
+import numpy as np
 import ray
 
+from src.utils.data import LiarDataset
 from src.utils.datatypes import Query
 
 def find_response(responses: List[Dict[str, Union[int, float]]], id: int):
@@ -35,5 +37,8 @@ def send_parallel(data: List[str], server_endpoint: str="127.0.0.1:8000"):
 
     return {f"e2e_delay": time_end - time_start, "results": results}
 
-
-    
+def sample_test_dataset(num_samples: int, seed: int=0) -> List[Dict[str, Union[int, str]]]:
+    np.random.seed(seed)
+    dataset = LiarDataset("test")
+    samples = [dataset[int(rand_idx)] for rand_idx in np.random.randint(0, len(dataset), size=num_samples)]
+    return samples
