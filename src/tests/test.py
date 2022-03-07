@@ -99,7 +99,7 @@ def test_correctness(num_queries: int, server_endpoint: str) -> None:
 
 
 if __name__=="__main__":
-    parser = argparse.ArgumentParser(description='Test throughput.')
+    parser = argparse.ArgumentParser(description='Configure test')
     parser.add_argument('--test_name', type=str)
     parser.add_argument('--server_endpoint', type=str)
     parser.add_argument('-n', type=int, default=10)
