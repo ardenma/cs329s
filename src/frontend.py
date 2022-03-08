@@ -51,9 +51,11 @@ class StreamlitFrontend():
         resp = st.session_state['current_response']
         st.header(f"Results:")
         with st.container():
-            col1, col2 = st.columns(2)
+            col1, col2, col3, col4 = st.columns(4)
             col1.metric("Predicted Label:", resp['predicted_class'])
-            col2.metric("Inference Latency (ms)", f"{st.session_state.last_latency_ms:.3f}", f"{st.session_state.last_latency_delta_ms:.3f}") 
+            col2.metric("End-to-end Latency (ms)", f"{st.session_state.last_latency_ms:.3f}", f"{st.session_state.last_latency_delta_ms:.3f}") 
+            col3.metric("Inference Latency (ms)", f"{st.session_state.last_server_latency_ms:.3f}", f"{st.session_state.last_server_latency_delta_ms:.3f}")
+            col4.metric("Network Latency (ms)", f"{st.session_state.last_network_latency_ms:.3f}", f"{st.session_state.last_network_latency_delta_ms:.3f}" )
             st.write("Potential class labels: (true, false, unsure)")
 
         st.header(f"Most similar statments:")
@@ -82,12 +84,28 @@ class StreamlitFrontend():
         time_end = perf_counter()
 
         current_latency_ms = (time_end - time_start) * 1000
+        current_server_latency_ms = st.session_state.current_response['diagnostics']['server_side_latency_ms']
+        current_network_latency_ms = current_latency_ms - current_server_latency_ms
+
 
         if 'last_latency_ms' in st.session_state:
             st.session_state['last_latency_delta_ms'] = st.session_state.last_latency_ms - current_latency_ms
         else:
             st.session_state['last_latency_delta_ms'] = 0
+
+        if 'last_server_latency_ms' in st.session_state:
+            st.session_state['last_server_latency_delta_ms'] = st.session_state.last_server_latency_ms - current_server_latency_ms
+        else:
+            st.session_state['last_server_latency_delta_ms'] = 0
+
+        if 'last_network_latency_ms' in st.session_state:
+            st.session_state['last_network_latency_delta_ms'] = st.session_state.last_network_latency_ms - current_network_latency_ms
+        else:
+            st.session_state['last_network_latency_delta_ms'] = 0
+
         st.session_state.last_latency_ms = current_latency_ms
+        st.session_state.last_server_latency_ms = current_server_latency_ms
+        st.session_state.last_network_latency_ms = current_network_latency_ms
 
         logging.info(st.session_state.current_response)
 
