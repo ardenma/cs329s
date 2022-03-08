@@ -22,7 +22,11 @@
 1. use `ray start --head` to start the ray cluster
     - Note: if you receive a message about redis failing to start, try this https://github.com/ray-project/ray/issues/6146
 2. use `python src/serve.py` to start the application (the application will run until `ray stop` is called)
+    - Use the option `--detached` to have the serve instance run in the background.
 3. use `ray stop` to kill the ray cluster
+
+# Running the Frontend
+1. Use the command `streamlit run frontend.py`.
 
 ## Testing
 1. use `ray start --head` to start the ray cluster

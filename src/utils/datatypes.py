@@ -14,6 +14,11 @@ class Response(BaseModel):
     example_similarities: List[float]
     diagnostics: Dict[str, Any]
 
+class Feedback(BaseModel):
+    text_feedback: str
+
+class FeedbackResponse(BaseModel):
+    ack: bool
 class PredictionResult(BaseModel):
     prediction: int
     statements: List[str]

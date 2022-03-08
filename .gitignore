@@ -3,7 +3,9 @@ myproject.egg-info/
 src/saved_models/
 src/saved_models_personal/
 src/artifacts/
+src/artifacts
 src/indexes/
+src/deployment_logs/
 **/wandb/
 **/__pycache__/
 **/.DS_Store

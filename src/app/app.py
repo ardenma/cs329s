@@ -1,17 +1,22 @@
+import os
 import logging
+import pathlib
+from datetime import datetime
 from time import perf_counter
-from typing import Dict, Any
 
 import ray
 from fastapi import FastAPI
 from ray import serve
 
 from src.app.model_deployment import MisinformationDetectionModel
-from src.utils.datatypes import Query, Response, AppConfig
+from src.utils.datatypes import Query, Response, Feedback, FeedbackResponse, AppConfig
 from src.utils.data import get_label_to_classname_map
 
 app = FastAPI()
 
+BASEDIR = pathlib.Path(__file__).parent.parent.resolve()
+LOGDIR = os.path.join(BASEDIR, "deployment_logs")
+if not os.path.exists(LOGDIR): os.mkdir(LOGDIR)
 @serve.deployment(route_prefix="/app")
 @serve.ingress(app)
 class MisinformationDetectionApp:
@@ -19,6 +24,7 @@ class MisinformationDetectionApp:
         logging.basicConfig(level=logging.INFO)
         self.num_labels = int(config.artifact_name.split('-')[3])
         self.label_to_classname = get_label_to_classname_map(self.num_labels)
+        self.deployment_time = datetime.now()
         MisinformationDetectionModel.deploy(config=config)
         self.model = MisinformationDetectionModel.get_handle(sync=True)  # TODO figure out why sync=False fails
 
@@ -41,6 +47,13 @@ class MisinformationDetectionApp:
                     )
         logging.info(f"Returned response for query {query.id}, latency: {(time_end - time_start) * 1000:.3f} ms")
         return response
+    
+    @app.post("/feedback", response_model=FeedbackResponse)
+    async def log_feedback(self, feedback: Feedback) -> FeedbackResponse:
+        with open(os.path.join(LOGDIR, f"deployment_log-{self.deployment_time}.txt"), "a+") as logfile:
+            logfile.write(f"{datetime.now()}: {feedback.text_feedback}\n")
+        logging.info(f"Received feedback: {feedback.text_feedback}")
+        return FeedbackResponse(ack=True)
 
     @app.get("/")
     def root(self):
