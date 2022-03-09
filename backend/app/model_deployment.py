@@ -7,12 +7,12 @@ import faiss
 import numpy as np
 from ray import serve
 
-from src.models.distilbert import DistilBertForSequenceEmbedding
-from src.models.voting import WeightedMajorityVoter
-from src.utils.data import LiarDataset
-from src.utils.artifacts import download_model_artifact, download_index_artifact
-from src.utils.index import cache_index, load_index
-from src.utils.datatypes import PredictionResult, AppConfig
+from backend.models.distilbert import DistilBertForSequenceEmbedding
+from backend.models.voting import WeightedMajorityVoter
+from backend.utils.data import LiarDataset
+from backend.utils.artifacts import download_model_artifact, download_index_artifact
+from backend.utils.index import cache_index, load_index
+from utils.datatypes import PredictionResult, AppConfig
 
 BASEDIR = pathlib.Path(__file__).parent.parent.absolute()
 @serve.deployment

@@ -5,8 +5,8 @@ from typing import List, Dict, Any, Union
 import numpy as np
 import ray
 
-from src.utils.data import LiarDataset
-from src.utils.datatypes import Query
+from backend.utils.data import LiarDataset
+from utils.datatypes import Query
 
 def find_response(responses: List[Dict[str, Union[int, float]]], id: int):
     for response in responses:
