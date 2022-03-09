@@ -22,6 +22,7 @@ from utils.index import create_index
 
 num_labels = 3
 
+
 def main(args):
     test_dataset = LiarDataset("test", num_labels=num_labels)
     id_map = LiarDataset("train", num_labels=num_labels).get_id_map()
@@ -39,13 +40,13 @@ def main(args):
     print("Done!")
 
     K = 3
-    
+
     query = test_dataset[100]["statement"]
     label = test_dataset[100]["label"]
 
     # Generate embeddings
-    with torch.no_grad():    
-        embeddings = embedding_model(query) 
+    with torch.no_grad():
+        embeddings = embedding_model(query)
         embeddings = torch.nn.functional.normalize(embeddings, p=2.0, dim=-1, eps=1e-12)
 
         # Cosine similarity search using normalized embeddings
@@ -58,19 +59,17 @@ def main(args):
         print(D)
         print(IDs)
 
-            
 
-if __name__=="__main__":
-    parser = argparse.ArgumentParser(description='Evaluate a model.')
-    parser.add_argument('--contrastive', action='store_true')
-    parser.add_argument('--model_path', type=str)
-    parser.add_argument('--index_path', type=str)
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Evaluate a model.")
+    parser.add_argument("--contrastive", action="store_true")
+    parser.add_argument("--model_path", type=str)
+    parser.add_argument("--index_path", type=str)
     args = parser.parse_args()
 
     # TODO add model_path arg for eval()
     if args.contrastive:
-      if not os.path.exists(args.model_path):
-          raise Exception("Need to specify a valid model path!")
-
+        if not os.path.exists(args.model_path):
+            raise Exception("Need to specify a valid model path!")
 
     main(args)

@@ -13,7 +13,9 @@ from utils.index import create_index
 
 cwd = pathlib.Path(__file__).parent.resolve()
 index_dir = os.path.join(cwd, "indexes")
-if not os.path.exists(index_dir): os.mkdir(index_dir)
+if not os.path.exists(index_dir):
+    os.mkdir(index_dir)
+
 
 def main(args):
     train_dataset = LiarDataset("train")
@@ -34,12 +36,13 @@ def main(args):
     else:
         print(f"Filename {filename} already exists, please delete it and try again.")
 
-if __name__=="__main__":
-    parser = argparse.ArgumentParser(description='Build an index.')
-    parser.add_argument('--model_path', type=str)
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Build an index.")
+    parser.add_argument("--model_path", type=str)
     args = parser.parse_args()
 
     if not os.path.exists(args.model_path):
         raise Exception("Need to specify a valid model path!")
-    
+
     main(args)

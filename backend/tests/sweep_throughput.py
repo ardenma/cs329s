@@ -8,14 +8,20 @@ from backend.tests.test import test_throughput
 from utils.datatypes import AppConfig
 
 
-def main(args):    
+def main(args):
 
-    ray.init(address="auto", namespace="serve")            # Connects to the local ray cluster
-    serve.start(detached=False)                            # Initialize a ray serve instance
+    ray.init(address="auto", namespace="serve")  # Connects to the local ray cluster
+    serve.start(detached=False)  # Initialize a ray serve instance
     CPU_COUNT = int(ray.available_resources()["CPU"])
     print(f"CPUs available in ray cluster: {CPU_COUNT}")
-    MAX_REPLICA_COUNT = CPU_COUNT - 4                      # Buffer for other ray processes
-    search_space = [{"num_embedding_model_replicas": i, "num_prediction_model_replicas": MAX_REPLICA_COUNT - i} for i in range(1, MAX_REPLICA_COUNT)]
+    MAX_REPLICA_COUNT = CPU_COUNT - 4  # Buffer for other ray processes
+    search_space = [
+        {
+            "num_embedding_model_replicas": i,
+            "num_prediction_model_replicas": MAX_REPLICA_COUNT - i,
+        }
+        for i in range(1, MAX_REPLICA_COUNT)
+    ]
 
     results = []
 
@@ -23,10 +29,12 @@ def main(args):
         config = AppConfig(
             artifact_name="daily-tree-15-3-labels:v5",
             num_embedding_model_replicas=params["num_embedding_model_replicas"],
-            num_prediction_model_replicas=params["num_prediction_model_replicas"]
+            num_prediction_model_replicas=params["num_prediction_model_replicas"],
         )
         redeploy_app(config=config)
-        throughput = test_throughput(num_queries=args.n, server_endpoint="127.0.0.1:8000")
+        throughput = test_throughput(
+            num_queries=args.n, server_endpoint="127.0.0.1:8000"
+        )
         result = params
         result["throughput"] = throughput
         results.append(result)
@@ -38,20 +46,22 @@ def main(args):
             best_throughput = result["throughput"]
             best_result = result
 
-    print("\n****************************************************************************************************")
+    print(
+        "\n****************************************************************************************************"
+    )
     print("THROUGHPUT SWEEP RESULTS:")
     for r in results:
         print(r)
     print("BEST RESULT:")
     print(best_result)
-    print("****************************************************************************************************\n")
+    print(
+        "****************************************************************************************************\n"
+    )
 
 
-
-
-if __name__=="__main__":
-    parser = argparse.ArgumentParser(description='Test throughput.')
-    parser.add_argument('-n', type=int, default=100)
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Test throughput.")
+    parser.add_argument("-n", type=int, default=100)
     args = parser.parse_args()
 
     main(args)
