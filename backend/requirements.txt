@@ -8,4 +8,3 @@ transformers==4.16.2
 faiss==1.5.3
 black==22.1.0
 wandb==0.12.11
-streamlit==1.7.0

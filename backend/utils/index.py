@@ -8,8 +8,8 @@ import faiss
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
-from src.models.distilbert import DistilBertForSequenceEmbedding
-from src.utils.data import LiarDataset
+from backend.models.distilbert import DistilBertForSequenceEmbedding
+from backend.utils.data import LiarDataset
 
 def create_index(embedding_model: DistilBertForSequenceEmbedding, num_labels: int) -> faiss.IndexIDMap:
     # Setup training dataloader for the index creation
@@ -29,16 +29,6 @@ def create_index(embedding_model: DistilBertForSequenceEmbedding, num_labels: in
         for (batch_idx, batch) in tqdm(enumerate(train_ldr)):
             embeddings = embedding_model(batch["data"]).cpu().numpy()
             index.add_with_ids(embeddings, batch["id"].cpu().numpy())
-    
-    # else:
-    #     logging.info("No GPU available, using CPU with multiprocessing to build index.")
-        
-    #     with torch.no_grad():
-    #         for (batch_idx, batch) in tqdm(enumerate(train_ldr)):
-    #             # embeddings = pool.map(embedding_model.forward, batch["data"])
-    #             embeddings = torch.vstack(Parallel(n_jobs=-1)(delayed(embedding_model.forward)(x) for x in batch["data"])).numpy()
-    #             print(embeddings)
-    #             index.add_with_ids(embeddings, batch["id"].numpy())
 
     logging.info(f"Indexed {index.ntotal} vectors.")
 

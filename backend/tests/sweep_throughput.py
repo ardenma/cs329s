@@ -1,13 +1,12 @@
 import argparse
-import multiprocessing
 
 import ray
 from ray import serve
-from multiprocessing import cpu_count
 
-from src.serve import serve_app, redeploy_app
-from src.utils.datatypes import AppConfig
-from src.tests.test import test_throughput
+from backend.serve import redeploy_app
+from backend.tests.test import test_throughput
+from utils.datatypes import AppConfig
+
 
 def main(args):    
 

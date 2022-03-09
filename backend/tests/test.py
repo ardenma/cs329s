@@ -5,8 +5,8 @@ from typing import Dict
 import numpy as np
 from sklearn.metrics import accuracy_score, f1_score
 
-from src.serve import serve_app
-from src.tests.utils import sample_test_dataset, send_parallel, print_results, find_response
+from backend.serve import serve_app
+from backend.tests.utils import sample_test_dataset, send_parallel, print_results, find_response
 
 def main(args):
     if args.test_name == "throughput":

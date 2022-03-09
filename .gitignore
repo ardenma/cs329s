@@ -1,11 +1,11 @@
 env/
 myproject.egg-info/
-src/saved_models/
-src/saved_models_personal/
-src/artifacts/
-src/artifacts
-src/indexes/
-src/deployment_logs/
+backend/saved_models/
+backend/saved_models_personal/
+backend/artifacts/
+backend/artifacts
+backend/indexes/
+backend/deployment_logs/
 **/wandb/
 **/__pycache__/
 **/.DS_Store

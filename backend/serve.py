@@ -4,8 +4,8 @@ import logging
 import ray
 from ray import serve
 
-from src.app.app import MisinformationDetectionApp
-from src.utils.datatypes import AppConfig
+from backend.app.app import MisinformationDetectionApp
+from utils.datatypes import AppConfig
 
 DEFAULT_CONFIG = AppConfig(
     artifact_name="daily-tree-15-3-labels:v5",
