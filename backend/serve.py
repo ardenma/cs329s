@@ -19,8 +19,11 @@ def serve_app(config: AppConfig=None, detached: bool=False):
         config = DEFAULT_CONFIG
     logging.info(f"config: {config.dict()}")
 
+    host = "0.0.0.0" if args.external_deployment else "127.0.0.1"
+
     ray.init(address="auto", namespace="serve")            # Connects to the local ray cluster
-    serve.start(detached=detached)                         # Initialize a ray serve instance
+    serve.start(detached=detached,                         # Initialize a ray serve instance
+                http_options={"host": host})          
     MisinformationDetectionApp.deploy(config=config)       # Deploys our application
 
 def redeploy_app(config: AppConfig):
@@ -32,6 +35,7 @@ if __name__=="__main__":
     parser.add_argument('--num_embedding_model_replicas', default=1, type=int)
     parser.add_argument('--num_prediction_model_replicas', default=1, type=int)
     parser.add_argument('--detached', action='store_true')
+    parser.add_argument('--external_deployment', action='store_true')
     args = parser.parse_args()
 
     config = AppConfig(
